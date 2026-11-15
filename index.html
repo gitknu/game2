@@ -489,7 +489,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) scale(0.6);
-    font-size: 28px;
+    font-size: 25px;
     font-weight: 900;
     letter-spacing: 0.8px;
     opacity: 0;
@@ -498,7 +498,7 @@
     z-index: 50;
     text-align: center;
     text-shadow: 0 0 24px rgba(0, 0, 0, 0.9), 0 0 18px rgba(255, 255, 255, 0.6);
-    background: rgba(7, 9, 19, 0.82);
+    background: rgba(7, 9, 19, 0.85);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: 12px 18px;
@@ -546,7 +546,7 @@
   <div id="menu-modal" class="modal-overlay active">
     <div class="modal-card">
       <h2 id="modal-heading" class="modal-title">КОСМІЧНА БИТВА</h2>
-      <p id="modal-desc" class="modal-subtitle">Водіть пальцем для руху й стрільби • У коопі бережіть напарника!</p>
+      <p id="modal-desc" class="modal-subtitle">Унікальні хвилі й арени • Збирайте бонуси ⚡🔱🛡️ • Бережіть напарника в коопі!</p>
       <div class="sub-options-box">
         <div style="margin-bottom: 6px;">
           <div class="section-label">Колір інтерфейсу:</div>
@@ -606,11 +606,13 @@
         </div>
       </div>
       <div class="section-label">Перемога за очками:</div>
-      <div class="target-score-selector" style="display:flex; justify-content:center; gap:6px; margin-bottom:12px;">
+      <div class="target-score-selector" style="display:flex; justify-content:center; gap:5px; flex-wrap:wrap; margin-bottom:12px;">
         <button class="target-btn" data-score="5">5</button>
         <button class="target-btn active" data-score="10">10</button>
         <button class="target-btn" data-score="15">15</button>
         <button class="target-btn" data-score="25">25</button>
+        <button class="target-btn" data-score="50">50</button>
+        <button class="target-btn" data-score="0">∞</button>
       </div>
       <div class="menu-actions">
         <button id="btn-play-resume" class="btn btn-primary">Почати матч</button>
@@ -653,6 +655,21 @@ class SoundEngine {
       osc.start(t); osc.stop(t + 0.06);
     } catch (e) {}
   }
+  playArmorHit() {
+    if (!this.enabled || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(740, t);
+      osc.frequency.exponentialRampToValueAtTime(320, t + 0.05);
+      gain.gain.setValueAtTime(0.14, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(t); osc.stop(t + 0.05);
+    } catch (e) {}
+  }
   playWallBounce() {
     if (!this.enabled || !this.ctx) return;
     try {
@@ -666,6 +683,20 @@ class SoundEngine {
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
       osc.connect(gain); gain.connect(this.ctx.destination);
       osc.start(t); osc.stop(t + 0.05);
+    } catch (e) {}
+  }
+  playWarningTick() {
+    if (!this.enabled || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(920, t);
+      gain.gain.setValueAtTime(0.12, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(t); osc.stop(t + 0.045);
     } catch (e) {}
   }
   playLaser(isP1) {
@@ -726,6 +757,21 @@ class SoundEngine {
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
       osc.connect(gain); gain.connect(this.ctx.destination);
       osc.start(t); osc.stop(t + 0.11);
+    } catch (e) {}
+  }
+  playSpring() {
+    if (!this.enabled || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(220, t);
+      osc.frequency.exponentialRampToValueAtTime(980, t + 0.18);
+      gain.gain.setValueAtTime(0.22, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(t); osc.stop(t + 0.18);
     } catch (e) {}
   }
   playBrickBump() {
@@ -812,7 +858,7 @@ const ctx = canvas.getContext('2d');
 const sound = new SoundEngine();
 let currentMode = 'INVADERS';
 let gameState = 'MENU';
-let targetScore = 10;
+let targetScore = 10; // 0 = нескінченно (∞)
 let p1Score = 0;
 let p2Score = 0;
 let p1Hits = 0;
@@ -856,6 +902,7 @@ function getThemeColors() {
 function createSparks(x, y, color, count = 12) {
   const theme = getThemeColors();
   const sparkColor = theme.isBW ? theme.fg : (color || '#ffffff');
+  const scope = currentMode === 'MARIO' ? 'mario' : 0;
   for (let i = 0; i < count; i++) {
     const angle = Math.random() * Math.PI * 2;
     const speed = 2 + Math.random() * 8;
@@ -866,19 +913,42 @@ function createSparks(x, y, color, count = 12) {
       radius: 2 + Math.random() * 3.2,
       alpha: 1,
       color: sparkColor,
-      decay: 0.03 + Math.random() * 0.04
+      decay: 0.03 + Math.random() * 0.04,
+      scope
     });
   }
 }
-function addFloatingText(x, y, text, color, playerScope = 0) {
+function addFloatingText(x, y, text, color, playerScope = 0, rotated = false) {
   const theme = getThemeColors();
   floatingTexts.push({
     x, y, text,
     color: theme.isBW ? theme.fg : color,
     alpha: 1,
-    vy: -1.6,
-    scope: playerScope // 0: global, 1: P1 mario viewport, 2: P2 mario viewport
+    vy: rotated ? 1.6 : -1.6,
+    scope: playerScope,
+    rotated
   });
+}
+function drawCanvasBadge(x, y, text, align = 'left') {
+  const theme = getThemeColors();
+  ctx.save();
+  ctx.font = 'bold 15px sans-serif';
+  const w = ctx.measureText(text).width + 20;
+  const rx = align === 'center' ? x - w / 2 : (align === 'right' ? x - w : x);
+  const ry = y - 13;
+  ctx.fillStyle = theme.isBW ? theme.surface : 'rgba(7, 9, 19, 0.78)';
+  ctx.strokeStyle = theme.isBW ? theme.fg : 'rgba(255, 255, 255, 0.25)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(rx, ry, w, 26, 8);
+  else ctx.rect(rx, ry, w, 26);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = theme.isBW ? theme.fg : theme.accent;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, rx + w / 2, y + 0.5);
+  ctx.restore();
 }
 const touchInput = {
   p1: { active: false, id: null, sx: 0, sy: 0, cx: 0, cy: 0 },
@@ -891,42 +961,84 @@ window.addEventListener('keydown', (e) => {
   }
   const code = e.code;
   keyState[code] = true;
-  if (gameState === 'PLAYING' && currentMode === 'SNAKE') {
-    if (snakeStyleMode === 'pixel') {
-      if (code === 'KeyW' && snake1.dir.y !== 1) snake1.nextDir = { x: 0, y: -1 };
-      else if (code === 'KeyS' && snake1.dir.y !== -1) snake1.nextDir = { x: 0, y: 1 };
-      else if (code === 'KeyA' && snake1.dir.x !== 1) snake1.nextDir = { x: -1, y: 0 };
-      else if (code === 'KeyD' && snake1.dir.x !== -1) snake1.nextDir = { x: 1, y: 0 };
-      if (code === 'ArrowUp' && snake2.dir.y !== 1) snake2.nextDir = { x: 0, y: -1 };
-      else if (code === 'ArrowDown' && snake2.dir.y !== -1) snake2.nextDir = { x: 0, y: 1 };
-      else if (code === 'ArrowLeft' && snake2.dir.x !== 1) snake2.nextDir = { x: -1, y: 0 };
-      else if (code === 'ArrowRight' && snake2.dir.x !== -1) snake2.nextDir = { x: 1, y: 0 };
-    }
+  if (gameState === 'PLAYING' && currentMode === 'SNAKE' && snakeStyleMode === 'pixel') {
+    if (code === 'KeyW' && snake1.dir.y !== 1) snake1.nextDir = { x: 0, y: -1 };
+    else if (code === 'KeyS' && snake1.dir.y !== -1) snake1.nextDir = { x: 0, y: 1 };
+    else if (code === 'KeyA' && snake1.dir.x !== 1) snake1.nextDir = { x: -1, y: 0 };
+    else if (code === 'KeyD' && snake1.dir.x !== -1) snake1.nextDir = { x: 1, y: 0 };
+    if (code === 'ArrowUp' && snake2.dir.y !== 1) snake2.nextDir = { x: 0, y: -1 };
+    else if (code === 'ArrowDown' && snake2.dir.y !== -1) snake2.nextDir = { x: 0, y: 1 };
+    else if (code === 'ArrowLeft' && snake2.dir.x !== 1) snake2.nextDir = { x: -1, y: 0 };
+    else if (code === 'ArrowRight' && snake2.dir.x !== -1) snake2.nextDir = { x: 1, y: 0 };
   }
 });
 window.addEventListener('keyup', (e) => {
   keyState[e.code] = false;
 });
+function hasReachedTarget(score) {
+  return targetScore > 0 && score >= targetScore;
+}
 /**
- * 1. ПОВІТРЯНИЙ ХОКЕЙ
+ * ============================================================================
+ * 1. ПОВІТРЯНИЙ ХОКЕЙ (Стимули: Вогняна шайба ×2, Капсули, Мультишайба, Анти-кемп)
+ * ============================================================================
  */
-const puck = { x: V_WIDTH / 2, y: V_HEIGHT / 2, vx: 0, vy: 0, radius: 30, friction: 0.993, maxSpeed: 38 };
-let puckTrail = [];
-const mallet1 = { id: 1, x: V_WIDTH / 2, y: V_HEIGHT - 180, targetX: V_WIDTH / 2, targetY: V_HEIGHT - 180, vx: 0, vy: 0, radius: 54, touchId: null };
-const mallet2 = { id: 2, x: V_WIDTH / 2, y: 180, targetX: V_WIDTH / 2, targetY: 180, vx: 0, vy: 0, radius: 54, touchId: null };
+let pucks = [];
+let hockeyOrbs = [];
+let hockeyOrbTimer = 0;
+let hockeyIdleFrames = 0;
+let hockeyLastHitter = 0;
+function makeMallet(id, y) {
+  return {
+    id, x: V_WIDTH / 2, y, prevX: V_WIDTH / 2, prevY: y,
+    targetX: V_WIDTH / 2, targetY: y, vx: 0, vy: 0,
+    baseRadius: 54, radius: 54, touchId: null,
+    bigTimer: 0, smallTimer: 0, campFrames: 0
+  };
+}
+const mallet1 = makeMallet(1, V_HEIGHT - 180);
+const mallet2 = makeMallet(2, 180);
+function resetPuck(targetP) {
+  const startY = targetP === 0 ? V_HEIGHT / 2 : (targetP === 1 ? V_HEIGHT / 2 + 150 : V_HEIGHT / 2 - 150);
+  pucks = [{
+    x: V_WIDTH / 2, y: startY, vx: 0, vy: 0,
+    radius: 30, friction: 0.993, maxSpeed: 38,
+    isBonus: false, life: 0, trail: []
+  }];
+  hockeyIdleFrames = 0;
+  hockeyLastHitter = 0;
+}
+function spawnHockeyOrb() {
+  const types = ['big', 'shrink', 'multi'];
+  const type = types[Math.floor(Math.random() * types.length)];
+  hockeyOrbs = [{
+    x: BORDER + 115 + Math.random() * (V_WIDTH - BORDER * 2 - 230),
+    y: V_HEIGHT / 2 + (Math.random() * 220 - 110),
+    radius: 22,
+    type,
+    life: 540, // 9с
+    pulse: 0
+  }];
+}
 /**
- * 2. КОСМІЧНА БИТВА (SPACE INVADERS)
+ * ============================================================================
+ * 2. КОСМІЧНА БИТВА (Нескінченні процедурні хвилі + Боси + PvP арени + Бонуси)
+ * ============================================================================
  */
 let invadersShape = 'coop';
-const ship1 = { x: V_WIDTH / 2, y: V_HEIGHT - 110, targetX: V_WIDTH / 2, touchId: null, isFiring: false, lastShot: 0, shields: 3, invuln: 0, rapidUntil: 0 };
-const ship2 = { x: V_WIDTH / 2, y: 110, targetX: V_WIDTH / 2, touchId: null, isFiring: false, lastShot: 0, shields: 3, invuln: 0, rapidUntil: 0 };
+let spaceLevel = 1;
+const ship1 = { x: V_WIDTH / 2, y: V_HEIGHT - 110, targetX: V_WIDTH / 2, touchId: null, isFiring: false, lastShot: 0, shields: 3, invuln: 0, rapidUntil: 0, tripleUntil: 0 };
+const ship2 = { x: V_WIDTH / 2, y: 110, targetX: V_WIDTH / 2, touchId: null, isFiring: false, lastShot: 0, shields: 3, invuln: 0, rapidUntil: 0, tripleUntil: 0 };
 let lasers = [];
 let alienShots = [];
 let bunkers = [];
+let spaceHazards = []; // Астероїди, міни та відбивачі для PvP
+let spacePowerups = [];
 let stars = [];
 let aliens = [];
-let alienSwarm = { offset: 0, dir: 1, speed: 2.2, lastAlienShot: 0 };
+let alienSwarm = { offset: 0, dir: 1, speed: 1.9, lastAlienShot: 0, fireDelay: 1320, maxShots: 2, shotSpeed: 5.5, bossMode: false };
 let ufo = { active: false, x: -100, y: V_HEIGHT / 2, vx: 3.5 };
+let spaceCoreTimer = 0;
 for (let i = 0; i < 65; i++) {
   stars.push({
     x: Math.random() * V_WIDTH,
@@ -934,82 +1046,406 @@ for (let i = 0; i < 65; i++) {
     radius: Math.random() * 1.8 + 0.6
   });
 }
-function initAliens() {
-  aliens = [];
-  const startX = (V_WIDTH - (6 * 70)) / 2 + 25;
-  const startY = V_HEIGHT / 2 - (3 * 54) / 2 + 12;
-  const colors = ['#facc15', '#c084fc', '#22c55e'];
-  for (let r = 0; r < 3; r++) {
-    for (let c = 0; c < 6; c++) {
-      aliens.push({
-        row: r, col: c,
-        baseX: startX + c * 70,
-        baseY: startY + r * 54,
-        x: startX + c * 70,
-        y: startY + r * 54,
-        w: 36, h: 26,
-        alive: true,
-        color: colors[r % colors.length]
+function createBunkerBlockCluster(cx, cy, cols = 5, rows = 3) {
+  const blockW = 16, blockH = 12;
+  const blocks = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      blocks.push({
+        x: cx - (cols * blockW) / 2 + c * blockW,
+        y: cy - (rows * blockH) / 2 + r * blockH,
+        w: blockW, h: blockH, hp: 1
       });
     }
   }
+  return blocks;
+}
+function initCoopWave(wave) {
+  aliens = [];
+  alienShots = [];
   alienSwarm.offset = 0;
   alienSwarm.dir = 1;
   alienSwarm.lastAlienShot = performance.now();
-}
-function initBunkers() {
-  bunkers = [];
-  alienShots = [];
-  ship1.shields = 3; ship1.invuln = 0; ship1.rapidUntil = 0;
-  ship2.shields = 3; ship2.invuln = 0; ship2.rapidUntil = 0;
-  let bunkerPositions = [];
-  if (invadersShape === 'coop') {
-    bunkerPositions = [{ x: 220, y: 310 }, { x: 540, y: 310 }, { x: 220, y: 1050 }, { x: 540, y: 1050 }];
-    initAliens();
-  } else if (invadersShape === 'simple') {
-    bunkerPositions = [
-      { x: 170, y: 380 }, { x: 380, y: 380 }, { x: 590, y: 380 },
-      { x: 170, y: 980 }, { x: 380, y: 980 }, { x: 590, y: 980 }
-    ];
-    aliens = [];
-  } else if (invadersShape === 'complex') {
-    bunkerPositions = [
-      { x: 170, y: 340 }, { x: 590, y: 340 },
-      { x: 260, y: 560 }, { x: 500, y: 560 },
-      { x: 380, y: 680 },
-      { x: 260, y: 800 }, { x: 500, y: 800 },
-      { x: 170, y: 1020 }, { x: 590, y: 1020 }
-    ];
-    aliens = [];
+  // Жорстко обмежена прогресія складності, щоб хвилі завжди залишалися прохідними
+  alienSwarm.speed = Math.min(4.35, 1.85 + (wave - 1) * 0.14);
+  alienSwarm.fireDelay = Math.max(580, 1320 - (wave - 1) * 45);
+  alienSwarm.maxShots = Math.min(6, 2 + Math.floor(wave / 3));
+  alienSwarm.shotSpeed = Math.min(8.2, 5.5 + (wave - 1) * 0.16);
+  alienSwarm.bossMode = (wave % 5 === 0);
+  const colors = ['#facc15', '#c084fc', '#22c55e', '#38bdf8'];
+  const centerX = V_WIDTH / 2;
+  const centerY = V_HEIGHT / 2;
+  if (alienSwarm.bossMode) {
+    // Бос-флагман кожну 5-ту хвилю + супровід
+    const bossHp = 8 + Math.min(12, Math.floor(wave / 5) * 2);
+    aliens.push({
+      kind: 'boss',
+      baseX: centerX, baseY: centerY - 22,
+      x: centerX, y: centerY - 22,
+      w: 96, h: 38,
+      hp: bossHp, maxHp: bossHp,
+      alive: true, phase: 0, color: '#ef4444'
+    });
+    const escortCount = Math.min(6, 4 + Math.floor(wave / 10) * 2);
+    for (let i = 0; i < escortCount; i++) {
+      const side = i % 2 === 0 ? -1 : 1;
+      const tier = Math.floor(i / 2);
+      const bx = centerX + side * (110 + tier * 64);
+      const by = centerY + 34 + (tier % 2) * 24;
+      aliens.push({
+        kind: tier === 0 ? 'tank' : 'commander',
+        baseX: bx, baseY: by, x: bx, y: by,
+        w: 36, h: 26, hp: 2, maxHp: 2,
+        alive: true, phase: i * 0.8, color: tier === 0 ? '#c084fc' : '#facc15'
+      });
+    }
+    return;
   }
-  const cols = 5, rows = 3, blockW = 16, blockH = 12;
-  bunkerPositions.forEach(bp => {
-    const blocks = [];
-    for (let r = 0; r < rows; r++) {
+  // 6 процедурних формацій
+  const patternIdx = (wave - 1 + Math.floor(Math.random() * 2)) % 6;
+  const coords = [];
+  if (patternIdx === 0) {
+    // Класична сітка (від 3x5 до 3x6)
+    const cols = wave === 1 ? 5 : 6;
+    const startX = centerX - ((cols - 1) * 72) / 2;
+    for (let r = 0; r < 3; r++) {
       for (let c = 0; c < cols; c++) {
-        blocks.push({
-          x: bp.x - (cols * blockW) / 2 + c * blockW,
-          y: bp.y - (rows * blockH) / 2 + r * blockH,
-          w: blockW, h: blockH, hp: 1
-        });
+        coords.push({ x: startX + c * 72, y: centerY - 56 + r * 52, row: r });
       }
     }
-    bunkers.push(blocks);
+  } else if (patternIdx === 1) {
+    // V-клин
+    for (let i = -3; i <= 3; i++) {
+      const absI = Math.abs(i);
+      coords.push({ x: centerX + i * 64, y: centerY - 70 + absI * 26, row: absI % 3 });
+      if (absI <= 2) coords.push({ x: centerX + i * 64, y: centerY + 12 + absI * 22, row: (absI + 1) % 3 });
+    }
+  } else if (patternIdx === 2) {
+    // Ромб
+    const rows = [1, 3, 5, 3, 1];
+    rows.forEach((cnt, r) => {
+      for (let c = 0; c < cnt; c++) {
+        coords.push({ x: centerX + (c - (cnt - 1) / 2) * 72, y: centerY - 84 + r * 42, row: r % 3 });
+      }
+    });
+  } else if (patternIdx === 3) {
+    // Дві ескадри (крила)
+    for (let side of [-1, 1]) {
+      for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 3; c++) {
+          coords.push({ x: centerX + side * (78 + c * 62), y: centerY - 54 + r * 52, row: r });
+        }
+      }
+    }
+  } else if (patternIdx === 4) {
+    // Шахівниця
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 7; c++) {
+        if ((r + c) % 2 === 0) {
+          coords.push({ x: centerX + (c - 3) * 66, y: centerY - 72 + r * 46, row: r % 3 });
+        }
+      }
+    }
+  } else {
+    // Хвиля синусоїди
+    for (let c = -3; c <= 3; c++) {
+      const sy = Math.sin(c * 0.85) * 32;
+      coords.push({ x: centerX + c * 66, y: centerY - 36 + sy, row: 0 });
+      coords.push({ x: centerX + c * 66, y: centerY + 26 + sy, row: 1 });
+    }
+  }
+  const tankProb = Math.min(0.32, Math.max(0, (wave - 1) * 0.05));
+  const dodgerProb = wave >= 3 ? Math.min(0.28, (wave - 2) * 0.045) : 0;
+  let commandersLeft = wave >= 2 ? (wave >= 6 ? 2 : 1) : 0;
+  coords.forEach((pt, idx) => {
+    let kind = 'scout';
+    let hp = 1;
+    if (commandersLeft > 0 && idx % Math.max(3, Math.floor(coords.length / 2)) === 2) {
+      kind = 'commander';
+      hp = 2;
+      commandersLeft--;
+    } else {
+      const roll = Math.random();
+      if (roll < tankProb) {
+        kind = 'tank';
+        hp = 2;
+      } else if (roll < tankProb + dodgerProb) {
+        kind = 'dodger';
+        hp = 1;
+      }
+    }
+    aliens.push({
+      kind,
+      baseX: pt.x, baseY: pt.y,
+      x: pt.x, y: pt.y,
+      w: kind === 'tank' ? 40 : 36, h: 26,
+      hp, maxHp: hp,
+      alive: true,
+      phase: idx * 0.7,
+      color: kind === 'commander' ? '#facc15' : (kind === 'tank' ? '#38bdf8' : colors[pt.row % colors.length])
+    });
   });
 }
+function initSpacePvpArena(level) {
+  bunkers = [];
+  spaceHazards = [];
+  const pattern = (level - 1) % 4;
+  // Симетричні бункери для обох гравців
+  if (pattern === 0) {
+    const xs = invadersShape === 'simple' ? [170, 380, 590] : [170, 590];
+    xs.forEach(x => {
+      bunkers.push(createBunkerBlockCluster(x, 360, 5, 3));
+      bunkers.push(createBunkerBlockCluster(V_WIDTH - x, V_HEIGHT - 360, 5, 3));
+    });
+  } else if (pattern === 1) {
+    [220, 540].forEach(x => {
+      bunkers.push(createBunkerBlockCluster(x, 330, 6, 3));
+      bunkers.push(createBunkerBlockCluster(V_WIDTH - x, V_HEIGHT - 330, 6, 3));
+    });
+    bunkers.push(createBunkerBlockCluster(380, 440, 4, 2));
+    bunkers.push(createBunkerBlockCluster(380, V_HEIGHT - 440, 4, 2));
+  } else if (pattern === 2) {
+    [140, 310, 450, 620].forEach(x => {
+      bunkers.push(createBunkerBlockCluster(x, 370, 4, 2));
+      bunkers.push(createBunkerBlockCluster(V_WIDTH - x, V_HEIGHT - 370, 4, 2));
+    });
+  } else {
+    [175, 380, 585].forEach((x, idx) => {
+      const yOff = idx === 1 ? 430 : 330;
+      bunkers.push(createBunkerBlockCluster(x, yOff, 5, 2));
+      bunkers.push(createBunkerBlockCluster(V_WIDTH - x, V_HEIGHT - yOff, 5, 2));
+    });
+  }
+  // Додаткові центральні перешкоди та міни / відбивачі
+  if (invadersShape === 'complex') {
+    const midOffsets = level >= 2 ? [190, 570] : [250, 510];
+    midOffsets.forEach(x => {
+      bunkers.push(createBunkerBlockCluster(x, 560, 4, 2));
+      bunkers.push(createBunkerBlockCluster(V_WIDTH - x, V_HEIGHT - 560, 4, 2));
+    });
+    // Відбивачі лазерів (рикошети) з 2-го рівня
+    if (level >= 2) {
+      const defY = 120 + Math.min(80, level * 12);
+      spaceHazards.push({ type: 'deflector', x: 185, y: V_HEIGHT / 2 - defY, w: 72, h: 12, angle: 0.45 });
+      spaceHazards.push({ type: 'deflector', x: V_WIDTH - 185, y: V_HEIGHT / 2 + defY, w: 72, h: 12, angle: 0.45 });
+    }
+    // Вибухові космічні міни в середній зоні
+    const mineCount = Math.min(3, 1 + Math.floor(level / 2));
+    for (let i = 0; i < mineCount; i++) {
+      const mx = 160 + ((i + 1) * (V_WIDTH - 320)) / (mineCount + 1);
+      spaceHazards.push({ type: 'mine', x: mx, y: V_HEIGHT / 2 + (i % 2 === 0 ? -55 : 55), radius: 18, alive: true });
+    }
+  } else if (level >= 2) {
+    // У "Простих" починаючи з 2-го рівня з'являються центральні астероїди (руйнівні)
+    const astCount = Math.min(4, 1 + Math.floor(level / 2));
+    for (let i = 0; i < astCount; i++) {
+      const ax = 150 + ((i + 1) * (V_WIDTH - 300)) / (astCount + 1);
+      spaceHazards.push({ type: 'asteroid', x: ax, y: V_HEIGHT / 2 + (i % 2 === 0 ? -42 : 42), radius: 20, hp: 3, alive: true });
+    }
+  }
+}
+function initBunkers(keepShipBuffs = false) {
+  bunkers = [];
+  spaceHazards = [];
+  alienShots = [];
+  spacePowerups = [];
+  spaceCoreTimer = 0;
+  if (!keepShipBuffs) {
+    ship1.shields = 3; ship1.invuln = 0; ship1.rapidUntil = 0; ship1.tripleUntil = 0;
+    ship2.shields = 3; ship2.invuln = 0; ship2.rapidUntil = 0; ship2.tripleUntil = 0;
+  }
+  if (invadersShape === 'coop') {
+    const bp = [{ x: 220, y: 310 }, { x: 540, y: 310 }, { x: 220, y: 1050 }, { x: 540, y: 1050 }];
+    bp.forEach(p => bunkers.push(createBunkerBlockCluster(p.x, p.y, 5, 3)));
+    initCoopWave(spaceLevel);
+  } else {
+    aliens = [];
+    initSpacePvpArena(spaceLevel);
+  }
+}
 /**
- * 3. ПОДВІЙНА ЗМІЙКА (DOUBLE SNAKE)
+ * ============================================================================
+ * 3. ПОДВІЙНА ЗМІЙКА (Голод 7с + Золоті плоди + Процедурні прохідні арени)
+ * ============================================================================
  */
 let snakeWallMode = 'looped';
 let snakeStyleMode = 'flex';
 const GRID_SIZE = 30, GRID_COLS = 23, GRID_ROWS = 43;
 const ARENA_X = BORDER, ARENA_Y = BORDER;
+const HUNGER_MAX_FRAMES = 420; // Рівно 7.0 секунд на 60Hz
+let snakeLevel = 1;
+let snakeRoundFood = 0;
 let snakeFoods = [];
+let goldFood = null;
+let goldFoodSpawnTimer = 0;
+let snakeObstacles = []; // [{ gx, gy, x, y, w, h }]
+let snakeGridBlocked = []; // [gx][gy] boolean
 let snakeTickCounter = 0;
-const snake1 = { body: [], dir: { x: 0, y: -1 }, nextDir: { x: 0, y: -1 }, angle: -Math.PI / 2, targetAngle: -Math.PI / 2, speed: 4.3 };
-const snake2 = { body: [], dir: { x: 0, y: 1 }, nextDir: { x: 0, y: 1 }, angle: Math.PI / 2, targetAngle: Math.PI / 2, speed: 4.3 };
+const snake1 = { body: [], dir: { x: 0, y: -1 }, nextDir: { x: 0, y: -1 }, angle: -Math.PI / 2, targetAngle: -Math.PI / 2, speed: 4.3, hunger: HUNGER_MAX_FRAMES, boostUntil: 0 };
+const snake2 = { body: [], dir: { x: 0, y: 1 }, nextDir: { x: 0, y: 1 }, angle: Math.PI / 2, targetAngle: Math.PI / 2, speed: 4.3, hunger: HUNGER_MAX_FRAMES, boostUntil: 0 };
+function isSnakeSpawnZone(gx, gy) {
+  // Безпечні коридори для старту обох гравців
+  if (gx >= 8 && gx <= 14 && gy >= 27 && gy <= 39) return true;
+  if (gx >= 8 && gx <= 14 && gy >= 3 && gy <= 15) return true;
+  return false;
+}
+function getSnakeNeighbors(gx, gy, grid) {
+  const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  const res = [];
+  for (let i = 0; i < 4; i++) {
+    let nx = gx + dirs[i][0];
+    let ny = gy + dirs[i][1];
+    if (snakeWallMode === 'looped') {
+      nx = (nx + GRID_COLS) % GRID_COLS;
+      ny = (ny + GRID_ROWS) % GRID_ROWS;
+    } else {
+      if (nx < 0 || nx >= GRID_COLS || ny < 0 || ny >= GRID_ROWS) continue;
+    }
+    if (!grid[nx][ny]) res.push([nx, ny]);
+  }
+  return res;
+}
+function validateAndCleanSnakeGrid(grid) {
+  // 1. Видаляємо будь-які 1-прохідні тупики (кожна порожня клітина має мати >= 2 відкриті сусіди)
+  let changed = true;
+  let safety = 0;
+  while (changed && safety < 40) {
+    changed = false;
+    safety++;
+    for (let x = 0; x < GRID_COLS; x++) {
+      for (let y = 0; y < GRID_ROWS; y++) {
+        if (grid[x][y]) continue;
+        const neigh = getSnakeNeighbors(x, y, grid);
+        if (neigh.length < 2) {
+          // Знаходимо сусідню поставлену стіну і відкриваємо її
+          const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+          for (let d = 0; d < 4; d++) {
+            let wx = x + dirs[d][0], wy = y + dirs[d][1];
+            if (wx >= 1 && wx <= GRID_COLS - 2 && wy >= 1 && wy <= GRID_ROWS - 2 && grid[wx][wy]) {
+              grid[wx][wy] = false;
+              grid[GRID_COLS - 1 - wx][GRID_ROWS - 1 - wy] = false;
+              changed = true;
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+  // 2. Перевіряємо зв'язність всього поля через BFS (жодних ізольованих кімнат)
+  const visited = Array.from({ length: GRID_COLS }, () => Array(GRID_ROWS).fill(false));
+  const queue = [[11, 32]];
+  visited[11][32] = true;
+  let reached = 0;
+  let totalOpen = 0;
+  for (let x = 0; x < GRID_COLS; x++) {
+    for (let y = 0; y < GRID_ROWS; y++) if (!grid[x][y]) totalOpen++;
+  }
+  let head = 0;
+  while (head < queue.length) {
+    const [cx, cy] = queue[head++];
+    reached++;
+    const neigh = getSnakeNeighbors(cx, cy, grid);
+    for (let i = 0; i < neigh.length; i++) {
+      const [nx, ny] = neigh[i];
+      if (!visited[nx][ny]) {
+        visited[nx][ny] = true;
+        queue.push([nx, ny]);
+      }
+    }
+  }
+  return reached === totalOpen && visited[11][10];
+}
+function generateSnakeArena(level) {
+  snakeGridBlocked = Array.from({ length: GRID_COLS }, () => Array(GRID_ROWS).fill(false));
+  snakeObstacles = [];
+  if (level <= 1) return;
+  // Складність росте плавно, але площа перешкод обмежена <= 14% поля
+  const pairTarget = Math.min(18, 2 + Math.floor((level - 1) * 1.4));
+  let success = false;
+  for (let attempt = 0; attempt < 15; attempt++) {
+    const grid = Array.from({ length: GRID_COLS }, () => Array(GRID_ROWS).fill(false));
+    for (let p = 0; p < pairTarget; p++) {
+      const shapeType = Math.floor(Math.random() * 4);
+      // Зовнішній 1-клітинний периметр (0 та MAX-1) ЗАВЖДИ вільний для безпечних порталів
+      const bx = 2 + Math.floor(Math.random() * (GRID_COLS - 4));
+      const by = 2 + Math.floor(Math.random() * Math.floor((GRID_ROWS - 4) / 2));
+      const cells = [];
+      if (shapeType === 0) {
+        // Горизонтальний бар 2-3
+        const len = 2 + (level >= 4 && Math.random() < 0.4 ? 1 : 0);
+        for (let k = 0; k < len; k++) cells.push([bx + k, by]);
+      } else if (shapeType === 1) {
+        // Вертикальний стовп 2-3
+        const len = 2 + (level >= 4 && Math.random() < 0.4 ? 1 : 0);
+        for (let k = 0; k < len; k++) cells.push([bx, by + k]);
+      } else if (shapeType === 2) {
+        // Квадрат 2x2
+        cells.push([bx, by], [bx + 1, by], [bx, by + 1], [bx + 1, by + 1]);
+      } else {
+        // L-куточок
+        cells.push([bx, by], [bx + 1, by], [bx, by + 1]);
+      }
+      // Перевіряємо, щоб перешкоди не злипалися діагонально без зазору і не чіпали спавн
+      let canPlace = true;
+      for (let i = 0; i < cells.length; i++) {
+        const [cx, cy] = cells[i];
+        const sx = GRID_COLS - 1 - cx, sy = GRID_ROWS - 1 - cy;
+        if (cx < 2 || cx > GRID_COLS - 3 || cy < 2 || cy > GRID_ROWS - 3) { canPlace = false; break; }
+        if (isSnakeSpawnZone(cx, cy) || isSnakeSpawnZone(sx, sy)) { canPlace = false; break; }
+        // Залишаємо принаймні 1 клітину проходу навколо центру й між різними блоками
+        for (let dx = -1; dx <= 1; dx++) {
+          for (let dy = -1; dy <= 1; dy++) {
+            if (grid[cx + dx][cy + dy]) { canPlace = false; break; }
+          }
+          if (!canPlace) break;
+        }
+        if (!canPlace) break;
+      }
+      if (canPlace) {
+        cells.forEach(([cx, cy]) => {
+          grid[cx][cy] = true;
+          grid[GRID_COLS - 1 - cx][GRID_ROWS - 1 - cy] = true;
+        });
+      }
+    }
+    if (validateAndCleanSnakeGrid(grid)) {
+      snakeGridBlocked = grid;
+      success = true;
+      break;
+    }
+  }
+  // Якщо раптом усі спроби не пройшли — гарантована симетрична арена з колонами
+  if (!success) {
+    snakeGridBlocked = Array.from({ length: GRID_COLS }, () => Array(GRID_ROWS).fill(false));
+    [[4, 14], [18, 14], [4, 28], [18, 28], [6, 21], [16, 21]].forEach(([gx, gy]) => {
+      snakeGridBlocked[gx][gy] = true;
+      snakeGridBlocked[gx + 1][gy] = true;
+    });
+  }
+  for (let x = 0; x < GRID_COLS; x++) {
+    for (let y = 0; y < GRID_ROWS; y++) {
+      if (snakeGridBlocked[x][y]) {
+        snakeObstacles.push({
+          gx: x, gy: y,
+          x: ARENA_X + x * GRID_SIZE,
+          y: ARENA_Y + y * GRID_SIZE,
+          w: GRID_SIZE, h: GRID_SIZE
+        });
+      }
+    }
+  }
+}
 function initSnakeMatch() {
   snakeTickCounter = 0;
+  snakeRoundFood = 0;
+  goldFood = null;
+  goldFoodSpawnTimer = 0;
+  generateSnakeArena(snakeLevel);
+  snake1.hunger = HUNGER_MAX_FRAMES;
+  snake2.hunger = HUNGER_MAX_FRAMES;
+  snake1.boostUntil = 0;
+  snake2.boostUntil = 0;
   if (snakeStyleMode === 'pixel') {
     snake1.body = [{ x: 11, y: 32 }, { x: 11, y: 33 }, { x: 11, y: 34 }, { x: 11, y: 35 }, { x: 11, y: 36 }];
     snake1.dir = { x: 0, y: -1 }; snake1.nextDir = { x: 0, y: -1 };
@@ -1030,6 +1466,8 @@ function initSnakeMatch() {
   updateScoreDOM();
 }
 function isCellOccupiedBySnakes(gx, gy) {
+  if (snakeGridBlocked[gx] && snakeGridBlocked[gx][gy]) return true;
+  if (goldFood && goldFood.gx === gx && goldFood.gy === gy) return true;
   for (let i = 0; i < snake1.body.length; i++) {
     if (snake1.body[i].x === gx && snake1.body[i].y === gy) return true;
   }
@@ -1041,9 +1479,18 @@ function isCellOccupiedBySnakes(gx, gy) {
   }
   return false;
 }
+function isPointNearObstacleOrSnake(px, py, pad = 22) {
+  for (let i = 0; i < snakeObstacles.length; i++) {
+    const ob = snakeObstacles[i];
+    if (px > ob.x - pad && px < ob.x + ob.w + pad && py > ob.y - pad && py < ob.y + ob.h + pad) return true;
+  }
+  if (Math.hypot(px - snake1.body[0].x, py - snake1.body[0].y) < 60) return true;
+  if (Math.hypot(px - snake2.body[0].x, py - snake2.body[0].y) < 60) return true;
+  return false;
+}
 function spawnSnakeFood(count = 4) {
   let attempts = 0;
-  while (snakeFoods.length < count && attempts < 200) {
+  while (snakeFoods.length < count && attempts < 250) {
     attempts++;
     if (snakeStyleMode === 'pixel') {
       const gx = Math.floor(Math.random() * GRID_COLS);
@@ -1052,18 +1499,37 @@ function spawnSnakeFood(count = 4) {
         snakeFoods.push({ gx, gy });
       }
     } else {
-      const fx = BORDER + 50 + Math.random() * (V_WIDTH - BORDER * 2 - 100);
-      const fy = BORDER + 50 + Math.random() * (V_HEIGHT - BORDER * 2 - 100);
-      const near1 = Math.hypot(fx - snake1.body[0].x, fy - snake1.body[0].y) < 60;
-      const near2 = Math.hypot(fx - snake2.body[0].x, fy - snake2.body[0].y) < 60;
-      if (!near1 && !near2) {
+      const fx = BORDER + 45 + Math.random() * (V_WIDTH - BORDER * 2 - 90);
+      const fy = BORDER + 45 + Math.random() * (V_HEIGHT - BORDER * 2 - 90);
+      if (!isPointNearObstacleOrSnake(fx, fy, 20)) {
         snakeFoods.push({ x: fx, y: fy, radius: 13 });
       }
     }
   }
 }
+function spawnGoldFood() {
+  for (let attempts = 0; attempts < 120; attempts++) {
+    const gx = 3 + Math.floor(Math.random() * (GRID_COLS - 6));
+    const gy = 13 + Math.floor(Math.random() * 17);
+    if (snakeStyleMode === 'pixel') {
+      if (!isCellOccupiedBySnakes(gx, gy)) {
+        goldFood = { gx, gy, life: 360, maxLife: 360 };
+        return;
+      }
+    } else {
+      const fx = ARENA_X + gx * GRID_SIZE + GRID_SIZE / 2;
+      const fy = ARENA_Y + gy * GRID_SIZE + GRID_SIZE / 2;
+      if (!isPointNearObstacleOrSnake(fx, fy, 22)) {
+        goldFood = { x: fx, y: fy, radius: 15, life: 360, maxLife: 360 };
+        return;
+      }
+    }
+  }
+}
 /**
- * 4. МАРІО ДУЕТ (ПОВНИЙ АПГРЕЙД: КНОПКИ КЕРУВАННЯ, НЕЗАЛЕЖНІ КАМЕРИ, БОНУСИ, РІВНІ)
+ * ============================================================================
+ * 4. МАРІО ДУЕТ (Нескінченні процедурні біоми, рухомі платформи, пружини, гарантована прохідність)
+ * ============================================================================
  */
 const MARIO_BTN = {
   left:  { x: 24,  y: 500, w: 96,  h: 96 },
@@ -1076,13 +1542,16 @@ const marioControls = {
 };
 const marioWorld = {
   level: 1,
+  biome: 0,
   blocks: [],
+  movingPlatforms: [],
+  springs: [],
   coins: [],
   enemies: [],
   powerups: [],
   scenery: [],
   popCoins: [],
-  flagX: 3800,
+  flagX: 3600,
   flagReached: false
 };
 function makeRunner(startX) {
@@ -1093,7 +1562,7 @@ function makeRunner(startX) {
     coins: 0, lives: 3,
     big: false, starTimer: 0, invuln: 0, anim: 0,
     lastSafeX: startX, lastSafeY: 547,
-    respawnTimer: 0
+    respawnTimer: 0, ridingPlat: null
   };
 }
 const p1Runner = makeRunner(110);
@@ -1111,17 +1580,20 @@ function initMarioWorld(keepStats = false) {
     p1Runner.coins = c1; p1Runner.lives = l1; p1Runner.big = b1;
     p2Runner.coins = c2; p2Runner.lives = l2; p2Runner.big = b2;
   }
+  marioWorld.biome = (marioWorld.level - 1) % 4;
   marioWorld.blocks = [];
+  marioWorld.movingPlatforms = [];
+  marioWorld.springs = [];
   marioWorld.coins = [];
   marioWorld.enemies = [];
   marioWorld.powerups = [];
   marioWorld.scenery = [];
   marioWorld.popCoins = [];
-  marioWorld.flagX = 3700 + (marioWorld.level - 1) * 200;
+  marioWorld.flagX = Math.min(5200, 3400 + (marioWorld.level - 1) * 200);
   marioWorld.flagReached = false;
-  for (let x = 80; x < marioWorld.flagX + 360; x += 290) {
-    marioWorld.scenery.push({ x: x + Math.random() * 80, y: 70 + Math.random() * 85, type: 'cloud' });
-    marioWorld.scenery.push({ x: x + 150, y: 550, type: 'bush' });
+  for (let x = 80; x < marioWorld.flagX + 380; x += 280) {
+    marioWorld.scenery.push({ x: x + Math.random() * 75, y: 65 + Math.random() * 85, type: 'cloud' });
+    marioWorld.scenery.push({ x: x + 145, y: 550, type: 'bush' });
   }
   // Безпечна стартова платформа (0 .. 460)
   marioWorld.blocks.push({ x: 0, y: 565, w: 460, h: 160, type: 'ground' });
@@ -1129,38 +1601,64 @@ function initMarioWorld(keepStats = false) {
   marioWorld.coins.push({ x: 269, y: 392, gotP1: false, gotP2: false });
   let curX = 460;
   let prevGroundY = 565;
-  while (curX < marioWorld.flagX - 380) {
-    // Безпечна ширина провалля (78-96px, стрибок перелітає 185px)
-    const makePit = curX > 650 && Math.random() < 0.24;
-    if (makePit) {
-      curX += 78 + Math.floor(Math.random() * 20);
+  let prevHadPit = false;
+  const pitChance = Math.min(0.36, 0.20 + (marioWorld.level - 1) * 0.02);
+  const enemySpeedBase = 1.25 + Math.min(1.05, (marioWorld.level - 1) * 0.08);
+  while (curX < marioWorld.flagX - 420) {
+    // ПРАВИЛО ПРОХІДНОСТІ: два провалля поспіль суворо заборонено!
+    if (!prevHadPit && curX > 540 && Math.random() < pitChance) {
+      // Перепад висоти після ями безпечний (вгору <= 45px)
+      let nextY = prevGroundY;
+      if (Math.random() < 0.35) {
+        nextY = Math.max(485, Math.min(570, prevGroundY + (Math.random() < 0.45 ? -40 : 45)));
+      }
+      const useMovingBridge = marioWorld.level >= 2 && Math.random() < 0.34;
+      let gap;
+      if (useMovingBridge) {
+        gap = 165 + Math.floor(Math.random() * 25); // Міст 96px перекриває яму з кроком <= 65px
+        const platY = Math.min(prevGroundY, nextY) - 10;
+        marioWorld.movingPlatforms.push({
+          x: curX + 20,
+          y: platY,
+          w: 96,
+          h: 18,
+          minX: curX + 10,
+          maxX: curX + gap - 106,
+          vx: 1.5 + Math.min(1.0, marioWorld.level * 0.08),
+          dx: 0
+        });
+        marioWorld.coins.push({ x: curX + gap / 2, y: platY - 46, gotP1: false, gotP2: false });
+      } else {
+        // Гарантовано перестрибується без розгону (105px на підйом, 140px по прямій)
+        if (nextY < prevGroundY) gap = 76 + Math.floor(Math.random() * 28);
+        else gap = 82 + Math.floor(Math.random() * Math.min(56, 24 + marioWorld.level * 4));
+        const arcPeakY = Math.min(prevGroundY, nextY) - 85;
+        marioWorld.coins.push({ x: curX + gap * 0.25, y: arcPeakY + 18, gotP1: false, gotP2: false });
+        marioWorld.coins.push({ x: curX + gap * 0.5, y: arcPeakY, gotP1: false, gotP2: false });
+        marioWorld.coins.push({ x: curX + gap * 0.75, y: arcPeakY + 18, gotP1: false, gotP2: false });
+      }
+      prevGroundY = nextY;
+      curX += gap;
+      prevHadPit = true;
       continue;
     }
+    prevHadPit = false;
     const segWidth = 280 + Math.floor(Math.random() * 3) * 80;
-    let groundY = 565;
-    if (curX > 1800 && prevGroundY >= 530 && Math.random() < 0.28) groundY = 505;
-    else if (curX > 950 && Math.random() < 0.28) groundY = 535;
+    let groundY = prevGroundY;
+    if (curX > 780 && Math.random() < 0.42) {
+      const delta = Math.random() < 0.5 ? -45 : 45;
+      groundY = Math.max(480, Math.min(570, prevGroundY + delta));
+    }
     prevGroundY = groundY;
     marioWorld.blocks.push({
       x: curX, y: groundY, w: segWidth, h: 720 - groundY, type: 'ground'
     });
-    // Блоки з монетами та бонусами
-    if (Math.random() < 0.78) {
-      const blockBaseY = groundY - 135;
-      const roll = Math.random();
-      const qItem = roll < 0.28 ? 'mushroom' : (roll > 0.9 ? 'star' : 'coin');
-      marioWorld.blocks.push({ x: curX + 56, y: blockBaseY, w: 38, h: 38, type: 'brick', brokenP1: false, brokenP2: false, bumpP1: 0, bumpP2: 0 });
-      marioWorld.blocks.push({ x: curX + 94, y: blockBaseY, w: 38, h: 38, type: 'qblock', item: qItem, usedP1: false, usedP2: false, bumpP1: 0, bumpP2: 0 });
-      marioWorld.blocks.push({ x: curX + 132, y: blockBaseY, w: 38, h: 38, type: 'brick', brokenP1: false, brokenP2: false, bumpP1: 0, bumpP2: 0 });
-      marioWorld.coins.push({ x: curX + 75, y: blockBaseY - 36, gotP1: false, gotP2: false });
-      marioWorld.coins.push({ x: curX + 151, y: blockBaseY - 36, gotP1: false, gotP2: false });
-    }
-    // Зелена труба (у кінці сегменту) з рослиною-піраньею
-    let enemyMaxX = curX + segWidth - 24;
-    if (curX > 820 && Math.random() < 0.36) {
-      const pipeH = 62;
-      const pipeX = curX + segWidth - 84;
-      const pipeY = groundY - pipeH;
+    // Визначаємо, чи буде труба на правій частині платформи
+    const hasPipe = curX > 760 && segWidth >= 320 && Math.random() < 0.36;
+    const pipeH = 56 + (marioWorld.level >= 3 && Math.random() < 0.4 ? 16 : 0);
+    const pipeX = curX + segWidth - 94;
+    const pipeY = groundY - pipeH;
+    if (hasPipe) {
       marioWorld.blocks.push({ x: pipeX, y: pipeY, w: 54, h: pipeH, type: 'pipe' });
       marioWorld.enemies.push({
         type: 'piranha',
@@ -1168,34 +1666,65 @@ function initMarioWorld(keepStats = false) {
         x: pipeX + 27, y: pipeY,
         alive: true, offset: 0, timer: Math.floor(Math.random() * 80)
       });
-      enemyMaxX = pipeX - 18;
     }
-    // Вороги на землі: Гумби та Черепахи Купа
-    if (enemyMaxX - (curX + 35) > 90) {
-      if (curX > 1050 && Math.random() < 0.45) {
+    // Блоки з монетами та бонусами (не перекривають трубу)
+    const blockEndLimit = hasPipe ? pipeX - 24 : curX + segWidth - 30;
+    if (blockEndLimit - (curX + 56) >= 120 && Math.random() < 0.76) {
+      const blockBaseY = groundY - 135;
+      const roll = Math.random();
+      const qItem = roll < 0.30 ? 'mushroom' : (roll > 0.88 ? 'star' : 'coin');
+      marioWorld.blocks.push({ x: curX + 56, y: blockBaseY, w: 38, h: 38, type: 'brick', brokenP1: false, brokenP2: false, bumpP1: 0, bumpP2: 0 });
+      marioWorld.blocks.push({ x: curX + 94, y: blockBaseY, w: 38, h: 38, type: 'qblock', item: qItem, usedP1: false, usedP2: false, bumpP1: 0, bumpP2: 0 });
+      marioWorld.blocks.push({ x: curX + 132, y: blockBaseY, w: 38, h: 38, type: 'brick', brokenP1: false, brokenP2: false, bumpP1: 0, bumpP2: 0 });
+      marioWorld.coins.push({ x: curX + 75, y: blockBaseY - 36, gotP1: false, gotP2: false });
+      marioWorld.coins.push({ x: curX + 151, y: blockBaseY - 36, gotP1: false, gotP2: false });
+    } else if (marioWorld.level >= 2 && !hasPipe && Math.random() < 0.45) {
+      // Пружинний трамплін до високого бонус-містка
+      const sprX = curX + 64;
+      marioWorld.springs.push({ x: sprX, y: groundY - 16, w: 34, h: 16, bounceAnim: 0 });
+      const skyY = groundY - 225;
+      marioWorld.blocks.push({ x: curX + 125, y: skyY, w: 38, h: 38, type: 'brick', brokenP1: false, brokenP2: false, bumpP1: 0, bumpP2: 0 });
+      marioWorld.blocks.push({ x: curX + 163, y: skyY, w: 38, h: 38, type: 'qblock', item: Math.random() < 0.5 ? 'star' : 'mushroom', usedP1: false, usedP2: false, bumpP1: 0, bumpP2: 0 });
+      marioWorld.coins.push({ x: curX + 144, y: skyY - 36, gotP1: false, gotP2: false });
+      marioWorld.coins.push({ x: curX + 182, y: skyY - 36, gotP1: false, gotP2: false });
+      marioWorld.coins.push({ x: curX + 220, y: skyY - 36, gotP1: false, gotP2: false });
+    }
+    // Вороги на сегменті (завжди з безпечним запасом від лівого краю)
+    const enemyMinX = curX + 65;
+    const enemyMaxX = hasPipe ? pipeX - 22 : curX + segWidth - 28;
+    if (enemyMaxX - enemyMinX > 75) {
+      const spawnX = enemyMinX + (enemyMaxX - enemyMinX) * 0.6;
+      const eRoll = Math.random();
+      if (marioWorld.level >= 3 && eRoll < 0.28) {
+        marioWorld.enemies.push({
+          type: 'parakoopa',
+          x: spawnX, y: groundY - 30, baseY: groundY - 18,
+          vx: -enemySpeedBase, vy: -4, alive: true, winged: true,
+          inShell: false, shellSpeed: 0, shellGrace: 0,
+          minX: curX + 28, maxX: enemyMaxX
+        });
+      } else if (curX > 900 && eRoll < 0.55) {
         marioWorld.enemies.push({
           type: 'koopa',
-          x: curX + 120, y: groundY - 18, vx: -1.45,
+          x: spawnX, y: groundY - 18, vx: -enemySpeedBase,
           alive: true, inShell: false, shellSpeed: 0, shellGrace: 0,
-          minX: curX + 24, maxX: enemyMaxX
+          minX: curX + 28, maxX: enemyMaxX
         });
-      } else if (Math.random() < 0.72) {
+      } else if (eRoll < 0.85) {
         marioWorld.enemies.push({
           type: 'goomba',
-          x: curX + 100, y: groundY - 16, vx: -1.35,
+          x: spawnX, y: groundY - 16, vx: -enemySpeedBase * 0.95,
           alive: true, squished: false, squishTimer: 0,
-          minX: curX + 24, maxX: enemyMaxX
+          minX: curX + 28, maxX: enemyMaxX
         });
       }
     }
     curX += segWidth;
   }
-  // Фінішна зона перед флагштоком і замком (рівна земля)
-  const finishSegStart = curX;
+  // Фінішна зона
   marioWorld.blocks.push({
-    x: finishSegStart, y: 565, w: marioWorld.flagX + 500 - finishSegStart, h: 160, type: 'ground'
+    x: curX, y: 565, w: marioWorld.flagX + 520 - curX, h: 160, type: 'ground'
   });
-  // Сходи перед флагштоком
   for (let s = 0; s < 5; s++) {
     marioWorld.blocks.push({
       x: marioWorld.flagX - 270 + s * 38,
@@ -1207,7 +1736,9 @@ function initMarioWorld(keepStats = false) {
   }
 }
 /**
- * АДАПТАЦІЯ ПОЛОТНА ТА КООРДИНАТ
+ * ============================================================================
+ * АДАПТАЦІЯ ПОЛОТНА ТА КЕРУВАННЯ
+ * ============================================================================
  */
 function resizeCanvas() {
   const container = document.getElementById('game-wrapper');
@@ -1236,9 +1767,6 @@ function getCanvasPoint(clientX, clientY) {
     y: ((clientY - rect.top) / rect.height) * V_HEIGHT
   };
 }
-/**
- * МУЛЬТИТАЧ І МИША ДЛЯ ВСІХ ІГОР
- */
 function syncMarioTouches(touchList) {
   marioControls.p1.left = false;
   marioControls.p1.right = false;
@@ -1444,10 +1972,11 @@ function updateSnakeDirection(playerNum) {
   }
 }
 /**
+ * ============================================================================
  * ФІЗИКА ІГОР (ФІКСОВАНИЙ ТІК 60Hz)
+ * ============================================================================
  */
 function updateHockeyPhysics() {
-  // Клавіатурне керування для ПК
   const kbSpd = 12;
   if (keyState['KeyA']) mallet1.targetX -= kbSpd;
   if (keyState['KeyD']) mallet1.targetX += kbSpd;
@@ -1457,6 +1986,13 @@ function updateHockeyPhysics() {
   if (keyState['ArrowRight']) mallet2.targetX += kbSpd;
   if (keyState['ArrowUp']) mallet2.targetY -= kbSpd;
   if (keyState['ArrowDown']) mallet2.targetY += kbSpd;
+  [mallet1, mallet2].forEach(m => {
+    if (m.bigTimer > 0) m.bigTimer--;
+    if (m.smallTimer > 0) m.smallTimer--;
+    m.radius = m.baseRadius * (m.bigTimer > 0 ? 1.3 : 1) * (m.smallTimer > 0 ? 0.72 : 1);
+    m.prevX = m.x;
+    m.prevY = m.y;
+  });
   mallet1.targetX = Math.max(BORDER + mallet1.radius, Math.min(V_WIDTH - BORDER - mallet1.radius, mallet1.targetX));
   mallet1.targetY = Math.max(V_HEIGHT / 2 + mallet1.radius, Math.min(V_HEIGHT - BORDER - mallet1.radius, mallet1.targetY));
   mallet2.targetX = Math.max(BORDER + mallet2.radius, Math.min(V_WIDTH - BORDER - mallet2.radius, mallet2.targetX));
@@ -1470,6 +2006,37 @@ function updateHockeyPhysics() {
   }
   updateM(mallet1, V_HEIGHT / 2, V_HEIGHT - BORDER);
   updateM(mallet2, BORDER, V_HEIGHT / 2);
+  // Анти-кемп у воротах
+  const mainPuck = pucks[0];
+  [mallet1, mallet2].forEach(m => {
+    const goalY = m.id === 1 ? V_HEIGHT - BORDER : BORDER;
+    const inCrease = Math.hypot(m.x - V_WIDTH / 2, m.y - goalY) < 130;
+    const moved = Math.hypot(m.x - m.prevX, m.y - m.prevY);
+    const puckFar = mainPuck ? Math.hypot(mainPuck.x - m.x, mainPuck.y - m.y) > 220 : true;
+    if (inCrease && moved < 1.3 && puckFar && m.smallTimer === 0) {
+      m.campFrames++;
+      if (m.campFrames === 240) sound.playWarningTick();
+      if (m.campFrames >= 330) {
+        m.smallTimer = 210; // 3.5 сек зменшена бита
+        m.campFrames = 0;
+        sound.playBrickBump();
+        addFloatingText(m.x, m.id === 1 ? m.y - 60 : m.y + 60, 'ШТРАФ: МАЛА БИТА!', '#ef4444', 0, m.id === 2);
+      }
+    } else {
+      m.campFrames = Math.max(0, m.campFrames - 4);
+    }
+  });
+  // Спавн енергокапсул
+  hockeyOrbTimer++;
+  if (hockeyOrbs.length === 0 && hockeyOrbTimer >= 540) {
+    hockeyOrbTimer = 0;
+    spawnHockeyOrb();
+  }
+  for (let i = hockeyOrbs.length - 1; i >= 0; i--) {
+    hockeyOrbs[i].life--;
+    hockeyOrbs[i].pulse += 0.1;
+    if (hockeyOrbs[i].life <= 0) hockeyOrbs.splice(i, 1);
+  }
   const gL = (V_WIDTH - GOAL_WIDTH) / 2;
   const gR = (V_WIDTH + GOAL_WIDTH) / 2;
   const posts = [
@@ -1477,96 +2044,199 @@ function updateHockeyPhysics() {
     { x: gL, y: V_HEIGHT - BORDER }, { x: gR, y: V_HEIGHT - BORDER }
   ];
   const SUB_STEPS = 6;
-  for (let s = 0; s < SUB_STEPS; s++) {
-    puck.x += puck.vx / SUB_STEPS;
-    puck.y += puck.vy / SUB_STEPS;
-    puck.vx *= Math.pow(puck.friction, 1 / SUB_STEPS);
-    puck.vy *= Math.pow(puck.friction, 1 / SUB_STEPS);
-    // Зіткнення з битками
-    [mallet1, mallet2].forEach(m => {
-      const dx = puck.x - m.x, dy = puck.y - m.y;
-      const dist = Math.hypot(dx, dy);
-      if (dist < puck.radius + m.radius && dist > 0.001) {
-        const nx = dx / dist, ny = dy / dist;
-        puck.x = m.x + nx * (puck.radius + m.radius);
-        puck.y = m.y + ny * (puck.radius + m.radius);
-        const velAlongNormal = (puck.vx - m.vx) * nx + (puck.vy - m.vy) * ny;
-        if (velAlongNormal < 0) {
-          const impulse = -1.96 * velAlongNormal;
-          puck.vx += nx * impulse + m.vx * 0.55;
-          puck.vy += ny * impulse + m.vy * 0.55;
-          const spd = Math.hypot(puck.vx, puck.vy);
-          if (spd > puck.maxSpeed) {
-            puck.vx = (puck.vx / spd) * puck.maxSpeed;
-            puck.vy = (puck.vy / spd) * puck.maxSpeed;
+  let roundEnded = false;
+  for (let s = 0; s < SUB_STEPS && !roundEnded; s++) {
+    for (let pi = pucks.length - 1; pi >= 0; pi--) {
+      const p = pucks[pi];
+      p.x += p.vx / SUB_STEPS;
+      p.y += p.vy / SUB_STEPS;
+      p.vx *= Math.pow(p.friction, 1 / SUB_STEPS);
+      p.vy *= Math.pow(p.friction, 1 / SUB_STEPS);
+      // Зіткнення з битками
+      [mallet1, mallet2].forEach(m => {
+        const dx = p.x - m.x, dy = p.y - m.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < p.radius + m.radius && dist > 0.001) {
+          const nx = dx / dist, ny = dy / dist;
+          p.x = m.x + nx * (p.radius + m.radius);
+          p.y = m.y + ny * (p.radius + m.radius);
+          const velAlongNormal = (p.vx - m.vx) * nx + (p.vy - m.vy) * ny;
+          if (velAlongNormal < 0) {
+            const impulse = -1.96 * velAlongNormal;
+            p.vx += nx * impulse + m.vx * 0.55;
+            p.vy += ny * impulse + m.vy * 0.55;
+            const spd = Math.hypot(p.vx, p.vy);
+            if (spd > p.maxSpeed) {
+              p.vx = (p.vx / spd) * p.maxSpeed;
+              p.vy = (p.vy / spd) * p.maxSpeed;
+            }
+            totalHits++; rallyHits++;
+            hockeyIdleFrames = 0;
+            hockeyLastHitter = m.id;
+            if (m.id === 1) p1Hits++; else p2Hits++;
+            updateScoreDOM();
+            sound.playHit(spd / 15);
+            const sparkCol = rallyHits >= 6 ? '#facc15' : (m.id === 1 ? '#00f0ff' : '#ff0055');
+            createSparks((p.x + m.x) / 2, (p.y + m.y) / 2, sparkCol, rallyHits >= 6 ? 18 : 13);
+            if (rallyHits === 6 && !p.isBonus) {
+              sound.playPowerup();
+              addFloatingText(V_WIDTH / 2, V_HEIGHT / 2, 'ВОГНЯНА ШАЙБА ×2!', '#facc15', 0);
+            }
           }
-          totalHits++; rallyHits++;
-          if (m.id === 1) p1Hits++; else p2Hits++;
-          updateScoreDOM();
-          sound.playHit(spd / 15);
-          createSparks((puck.x + m.x) / 2, (puck.y + m.y) / 2, m.id === 1 ? '#00f0ff' : '#ff0055', 14);
+        }
+      });
+      // Зіткнення шайби з енергокапсулою
+      for (let oi = hockeyOrbs.length - 1; oi >= 0; oi--) {
+        const orb = hockeyOrbs[oi];
+        if (Math.hypot(p.x - orb.x, p.y - orb.y) < p.radius + orb.radius) {
+          const collectorId = hockeyLastHitter || (p.vy < 0 ? 1 : 2);
+          const collector = collectorId === 1 ? mallet1 : mallet2;
+          const opp = collectorId === 1 ? mallet2 : mallet1;
+          sound.playPowerup();
+          createSparks(orb.x, orb.y, '#facc15', 22);
+          if (orb.type === 'big') {
+            collector.bigTimer = 420; collector.smallTimer = 0;
+            addFloatingText(orb.x, orb.y, `⚡ БИТА+ Г${collectorId}!`, '#00f0ff', 0, collectorId === 2);
+          } else if (orb.type === 'shrink') {
+            opp.smallTimer = 330; opp.bigTimer = 0;
+            addFloatingText(orb.x, orb.y, `▼ МІНІ-Г${opp.id}!`, '#ff0055', 0, collectorId === 2);
+          } else if (orb.type === 'multi' && pucks.length < 2) {
+            const ang = Math.random() * Math.PI * 2;
+            pucks.push({
+              x: orb.x, y: orb.y,
+              vx: Math.cos(ang) * 14, vy: Math.sin(ang) * 14,
+              radius: 23, friction: 0.994, maxSpeed: 36,
+              isBonus: true, life: 600, trail: []
+            });
+            addFloatingText(orb.x, orb.y, '✦ 2 ШАЙБИ!', '#facc15', 0);
+          }
+          hockeyOrbs.splice(oi, 1);
         }
       }
-    });
-    // Бокові стіни
-    if (puck.x - puck.radius <= BORDER) {
-      puck.x = BORDER + puck.radius; puck.vx = Math.abs(puck.vx) * 0.95; sound.playWallBounce();
-    } else if (puck.x + puck.radius >= V_WIDTH - BORDER) {
-      puck.x = V_WIDTH - BORDER - puck.radius; puck.vx = -Math.abs(puck.vx) * 0.95; sound.playWallBounce();
+      // Бокові стіни
+      if (p.x - p.radius <= BORDER) {
+        p.x = BORDER + p.radius; p.vx = Math.abs(p.vx) * 0.95; sound.playWallBounce();
+      } else if (p.x + p.radius >= V_WIDTH - BORDER) {
+        p.x = V_WIDTH - BORDER - p.radius; p.vx = -Math.abs(p.vx) * 0.95; sound.playWallBounce();
+      }
+      // Стійки воріт
+      for (let pIdx = 0; pIdx < posts.length; pIdx++) {
+        const post = posts[pIdx];
+        const dx = p.x - post.x, dy = p.y - post.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < p.radius && dist > 0.001) {
+          const nx = dx / dist, ny = dy / dist;
+          p.x = post.x + nx * p.radius;
+          p.y = post.y + ny * p.radius;
+          const vn = p.vx * nx + p.vy * ny;
+          if (vn < 0) {
+            p.vx -= 1.9 * vn * nx;
+            p.vy -= 1.9 * vn * ny;
+            sound.playWallBounce();
+          }
+        }
+      }
+      // Ворота
+      if (p.y - p.radius <= BORDER) {
+        if (p.x >= gL && p.x <= gR) {
+          if (p.y < BORDER - 16) {
+            createSparks(p.x, BORDER, '#00f0ff', 28);
+            if (p.isBonus) {
+              pucks.splice(pi, 1);
+              p1Score++; updateScoreDOM(); sound.playGoal();
+              addFloatingText(p.x, BORDER + 55, 'БОНУС-ГОЛ Г1 +1!', '#facc15', 0);
+              if (hasReachedTarget(p1Score)) { endGame(1); roundEnded = true; break; }
+            } else {
+              const pts = rallyHits >= 6 ? 2 : 1;
+              triggerPoint(1, pts, pts === 2 ? 'ВОГНЯНИЙ ГОЛ ×2! Г1' : null);
+              roundEnded = true; break;
+            }
+          }
+        } else {
+          p.y = BORDER + p.radius; p.vy = Math.abs(p.vy) * 0.95; sound.playWallBounce();
+        }
+      } else if (p.y + p.radius >= V_HEIGHT - BORDER) {
+        if (p.x >= gL && p.x <= gR) {
+          if (p.y > V_HEIGHT - BORDER + 16) {
+            createSparks(p.x, V_HEIGHT - BORDER, '#ff0055', 28);
+            if (p.isBonus) {
+              pucks.splice(pi, 1);
+              p2Score++; updateScoreDOM(); sound.playGoal();
+              addFloatingText(p.x, V_HEIGHT - BORDER - 55, 'БОНУС-ГОЛ Г2 +1!', '#facc15', 0, true);
+              if (hasReachedTarget(p2Score)) { endGame(2); roundEnded = true; break; }
+            } else {
+              const pts = rallyHits >= 6 ? 2 : 1;
+              triggerPoint(2, pts, pts === 2 ? 'ВОГНЯНИЙ ГОЛ ×2! Г2' : null);
+              roundEnded = true; break;
+            }
+          }
+        } else {
+          p.y = V_HEIGHT - BORDER - p.radius; p.vy = -Math.abs(p.vy) * 0.95; sound.playWallBounce();
+        }
+      }
     }
-    // Кути стійок воріт
-    for (let pIdx = 0; pIdx < posts.length; pIdx++) {
-      const post = posts[pIdx];
-      const dx = puck.x - post.x, dy = puck.y - post.y;
+    // Зіткнення шайби об шайбу в мультишайбі
+    if (!roundEnded && pucks.length > 1) {
+      const a = pucks[0], b = pucks[1];
+      const dx = b.x - a.x, dy = b.y - a.y;
       const dist = Math.hypot(dx, dy);
-      if (dist < puck.radius && dist > 0.001) {
+      if (dist < a.radius + b.radius && dist > 0.001) {
         const nx = dx / dist, ny = dy / dist;
-        puck.x = post.x + nx * puck.radius;
-        puck.y = post.y + ny * puck.radius;
-        const vn = puck.vx * nx + puck.vy * ny;
-        if (vn < 0) {
-          puck.vx -= 1.9 * vn * nx;
-          puck.vy -= 1.9 * vn * ny;
-          sound.playWallBounce();
+        const overlap = (a.radius + b.radius - dist) * 0.5;
+        a.x -= nx * overlap; a.y -= ny * overlap;
+        b.x += nx * overlap; b.y += ny * overlap;
+        const dvx = a.vx - b.vx, dvy = a.vy - b.vy;
+        const vn = dvx * nx + dvy * ny;
+        if (vn > 0) {
+          a.vx -= vn * nx; a.vy -= vn * ny;
+          b.vx += vn * nx; b.vy += vn * ny;
+          sound.playHit(0.7);
         }
-      }
-    }
-    // Ворота та верхній/нижній борт
-    if (puck.y - puck.radius <= BORDER) {
-      if (puck.x >= gL && puck.x <= gR) {
-        if (puck.y < BORDER - 18) {
-          createSparks(puck.x, BORDER, '#00f0ff', 28);
-          triggerPoint(1);
-          break;
-        }
-      } else {
-        puck.y = BORDER + puck.radius; puck.vy = Math.abs(puck.vy) * 0.95; sound.playWallBounce();
-      }
-    }
-    if (puck.y + puck.radius >= V_HEIGHT - BORDER) {
-      if (puck.x >= gL && puck.x <= gR) {
-        if (puck.y > V_HEIGHT - BORDER + 18) {
-          createSparks(puck.x, V_HEIGHT - BORDER, '#ff0055', 28);
-          triggerPoint(2);
-          break;
-        }
-      } else {
-        puck.y = V_HEIGHT - BORDER - puck.radius; puck.vy = -Math.abs(puck.vy) * 0.95; sound.playWallBounce();
       }
     }
   }
-  if (Math.hypot(puck.vx, puck.vy) < 0.04) { puck.vx = 0; puck.vy = 0; }
-  if (Math.hypot(puck.vx, puck.vy) > 5) {
-    puckTrail.unshift({ x: puck.x, y: puck.y, alpha: 0.6 });
-    if (puckTrail.length > 7) puckTrail.pop();
-  } else if (puckTrail.length > 0) {
-    puckTrail.pop();
+  if (roundEnded) return;
+  // Час життя бонус-шайби, шлейфи та імпульс анти-затягування
+  for (let i = pucks.length - 1; i >= 0; i--) {
+    const p = pucks[i];
+    if (p.isBonus) {
+      p.life--;
+      if (p.life <= 0) {
+        createSparks(p.x, p.y, '#facc15', 12);
+        pucks.splice(i, 1);
+        continue;
+      }
+    }
+    const spd = Math.hypot(p.vx, p.vy);
+    if (spd < 0.04) { p.vx = 0; p.vy = 0; }
+    if (spd > 5) {
+      p.trail.unshift({ x: p.x, y: p.y, alpha: 0.6 });
+      if (p.trail.length > 7) p.trail.pop();
+    } else if (p.trail.length > 0) {
+      p.trail.pop();
+    }
+  }
+  if (pucks[0]) {
+    if (Math.hypot(pucks[0].vx, pucks[0].vy) < 1.8) {
+      hockeyIdleFrames++;
+      if (hockeyIdleFrames === 360 || hockeyIdleFrames === 420) sound.playWarningTick();
+      if (hockeyIdleFrames >= 480) {
+        const dirY = hockeyLastHitter === 1 ? -1 : (hockeyLastHitter === 2 ? 1 : (Math.random() < 0.5 ? 1 : -1));
+        const angleX = (Math.random() - 0.5) * 1.4;
+        pucks[0].vx = Math.sin(angleX) * 16;
+        pucks[0].vy = dirY * Math.cos(angleX) * 16;
+        hockeyIdleFrames = 0;
+        sound.playHit(1.8);
+        createSparks(pucks[0].x, pucks[0].y, '#facc15', 16);
+      }
+    } else {
+      hockeyIdleFrames = Math.max(0, hockeyIdleFrames - 3);
+    }
   }
 }
 function updateInvadersPhysics() {
   const now = performance.now();
   const theme = getThemeColors();
-  // Клавіатура для ПК
   if (keyState['KeyA']) ship1.targetX -= 10;
   if (keyState['KeyD']) ship1.targetX += 10;
   if (keyState['ArrowLeft']) ship2.targetX -= 10;
@@ -1580,53 +2250,121 @@ function updateInvadersPhysics() {
   if (ship2.invuln > 0) ship2.invuln--;
   const fire1 = ship1.isFiring || keyState['KeyW'] || keyState['Space'];
   const fire2 = ship2.isFiring || keyState['ArrowDown'] || keyState['Enter'];
-  const delay1 = now < ship1.rapidUntil ? 120 : 225;
-  const delay2 = now < ship2.rapidUntil ? 120 : 225;
+  const delay1 = now < ship1.rapidUntil ? 120 : 220;
+  const delay2 = now < ship2.rapidUntil ? 120 : 220;
   if (fire1 && now - ship1.lastShot > delay1) {
-    lasers.push({ x: ship1.x, y: ship1.y - 20, vy: -17, from: 1, color: theme.p1, dead: false });
+    lasers.push({ x: ship1.x, y: ship1.y - 20, vx: 0, vy: -17, from: 1, color: theme.p1, dead: false, bounces: 0, isSide: false });
+    if (now < ship1.tripleUntil) {
+      lasers.push({ x: ship1.x - 14, y: ship1.y - 16, vx: -2.2, vy: -16.5, from: 1, color: theme.p1, dead: false, bounces: 0, isSide: true });
+      lasers.push({ x: ship1.x + 14, y: ship1.y - 16, vx: 2.2, vy: -16.5, from: 1, color: theme.p1, dead: false, bounces: 0, isSide: true });
+    }
     ship1.lastShot = now; sound.playLaser(true); totalHits++; updateScoreDOM();
   }
   if (fire2 && now - ship2.lastShot > delay2) {
-    lasers.push({ x: ship2.x, y: ship2.y + 20, vy: 17, from: 2, color: theme.p2, dead: false });
+    lasers.push({ x: ship2.x, y: ship2.y + 20, vx: 0, vy: 17, from: 2, color: theme.p2, dead: false, bounces: 0, isSide: false });
+    if (now < ship2.tripleUntil) {
+      lasers.push({ x: ship2.x - 14, y: ship2.y + 16, vx: -2.2, vy: 16.5, from: 2, color: theme.p2, dead: false, bounces: 0, isSide: true });
+      lasers.push({ x: ship2.x + 14, y: ship2.y + 16, vx: 2.2, vy: 16.5, from: 2, color: theme.p2, dead: false, bounces: 0, isSide: true });
+    }
     ship2.lastShot = now; sound.playLaser(false); totalHits++; updateScoreDOM();
+  }
+  // Оновлення бонусних капсул
+  for (let i = spacePowerups.length - 1; i >= 0; i--) {
+    const pu = spacePowerups[i];
+    pu.y += pu.vy;
+    if (pu.y < 0 || pu.y > V_HEIGHT) { spacePowerups.splice(i, 1); continue; }
+    let picked = 0;
+    if (Math.hypot(pu.x - ship1.x, pu.y - ship1.y) < 34) picked = 1;
+    else if (Math.hypot(pu.x - ship2.x, pu.y - ship2.y) < 34) picked = 2;
+    if (picked) {
+      const sh = picked === 1 ? ship1 : ship2;
+      sound.playPowerup();
+      createSparks(pu.x, pu.y, '#facc15', 16);
+      if (pu.kind === 'rapid') {
+        sh.rapidUntil = now + 5500;
+        addFloatingText(sh.x, sh.y, '⚡ ШВИДКИЙ ВОГОНЬ!', '#facc15', 0, picked === 2);
+      } else if (pu.kind === 'triple') {
+        sh.tripleUntil = now + 5500;
+        addFloatingText(sh.x, sh.y, '🔱 ПОТРІЙНИЙ ЗАЛП!', '#38bdf8', 0, picked === 2);
+      } else {
+        sh.shields = Math.min(4, sh.shields + 1);
+        addFloatingText(sh.x, sh.y, '🛡️ ЩИТ +1!', '#22c55e', 0, picked === 2);
+        updateScoreDOM();
+      }
+      spacePowerups.splice(i, 1);
+    }
   }
   // Навала прибульців (Кооп)
   if (invadersShape === 'coop' && aliens.length > 0) {
+    const swingLimit = alienSwarm.bossMode ? 180 : 88;
     alienSwarm.offset += alienSwarm.dir * alienSwarm.speed;
-    if (alienSwarm.offset > 85) alienSwarm.dir = -1;
-    if (alienSwarm.offset < -85) alienSwarm.dir = 1;
+    if (alienSwarm.offset > swingLimit) alienSwarm.dir = -1;
+    if (alienSwarm.offset < -swingLimit) alienSwarm.dir = 1;
     const aliveAliens = [];
     aliens.forEach(a => {
-      a.x = a.baseX + alienSwarm.offset;
+      a.x = Math.max(BORDER + 36, Math.min(V_WIDTH - BORDER - 36, a.baseX + alienSwarm.offset));
+      if (a.kind === 'dodger') {
+        a.phase += 0.06;
+        a.y = a.baseY + Math.sin(a.phase) * 26;
+      }
       if (a.alive) aliveAliens.push(a);
     });
     if (aliveAliens.length === 0) {
       sound.playGoal();
-      alienSwarm.speed = Math.min(5.2, alienSwarm.speed + 0.45);
-      addFloatingText(V_WIDTH / 2, V_HEIGHT / 2, 'НОВА ХВИЛЯ!', '#facc15', 0);
-      initAliens();
-    } else if (now - alienSwarm.lastAlienShot > Math.max(650, 1250 - alienSwarm.speed * 130)) {
+      spaceLevel++;
+      addFloatingText(V_WIDTH / 2, V_HEIGHT / 2, `ХВИЛЯ ${spaceLevel}!`, '#facc15', 0);
+      // Частковий ремонт бункерів щохвилі або оновлення кожні 3 хвилі
+      if (spaceLevel % 3 === 1) {
+        initBunkers(true);
+      } else {
+        bunkers.forEach(blocks => {
+          blocks.forEach(b => { if (b.hp === 0 && Math.random() < 0.4) b.hp = 1; });
+        });
+        initCoopWave(spaceLevel);
+      }
+      updateScoreDOM();
+      return;
+    } else if (alienShots.length < alienSwarm.maxShots && now - alienSwarm.lastAlienShot > alienSwarm.fireDelay) {
       const shooter = aliveAliens[Math.floor(Math.random() * aliveAliens.length)];
       const dir = Math.random() < 0.5 ? 1 : -1;
-      alienShots.push({ x: shooter.x, y: shooter.y + dir * 14, vy: dir * 7.2, dead: false });
+      if (shooter.kind === 'boss') {
+        alienShots.push({ x: shooter.x - 18, y: shooter.y + dir * 20, vx: -1.4, vy: dir * alienSwarm.shotSpeed, dead: false });
+        alienShots.push({ x: shooter.x + 18, y: shooter.y + dir * 20, vx: 1.4, vy: dir * alienSwarm.shotSpeed, dead: false });
+      } else {
+        alienShots.push({ x: shooter.x, y: shooter.y + dir * 14, vx: 0, vy: dir * alienSwarm.shotSpeed, dead: false });
+      }
       alienSwarm.lastAlienShot = now;
     }
   }
-  // НЛО
-  if (!ufo.active && Math.random() < 0.0032) {
+  // НЛО / Енергетичний супутник в центрі (працює в усіх режимах як стимул!)
+  spaceCoreTimer++;
+  const ufoChance = invadersShape === 'coop' ? 0.0032 : 0.0038;
+  if (!ufo.active && (Math.random() < ufoChance || spaceCoreTimer > 560)) {
+    spaceCoreTimer = 0;
     ufo.active = true;
     ufo.x = Math.random() > 0.5 ? -60 : V_WIDTH + 60;
-    ufo.vx = ufo.x < 0 ? 3.5 : -3.5;
+    ufo.vx = ufo.x < 0 ? 3.6 : -3.6;
   }
   if (ufo.active) {
     ufo.x += ufo.vx;
     if (ufo.x < -80 || ufo.x > V_WIDTH + 80) ufo.active = false;
   }
-  // Оновлення лазерів (без мутаційних багів індексів!)
+  // Лазери
   for (let i = 0; i < lasers.length; i++) {
     const l = lasers[i];
     if (l.dead) continue;
+    l.x += l.vx;
     l.y += l.vy;
+    if (l.x < BORDER || l.x > V_WIDTH - BORDER) {
+      if (l.bounces < 2) {
+        l.vx = -l.vx;
+        l.x = Math.max(BORDER, Math.min(V_WIDTH - BORDER, l.x));
+        l.bounces++;
+        sound.playWallBounce();
+      } else {
+        l.dead = true; continue;
+      }
+    }
     if (l.y < 0 || l.y > V_HEIGHT) { l.dead = true; continue; }
     // Лазер vs Лазер
     for (let j = i + 1; j < lasers.length; j++) {
@@ -1650,6 +2388,46 @@ function updateInvadersPhysics() {
       }
     }
     if (l.dead) continue;
+    // Перешкоди PvP (астероїди, міни, відбивачі)
+    for (let h = 0; h < spaceHazards.length; h++) {
+      const hz = spaceHazards[h];
+      if (hz.type === 'asteroid' && hz.alive) {
+        if (Math.hypot(l.x - hz.x, l.y - hz.y) < hz.radius + 5) {
+          l.dead = true; hz.hp--;
+          createSparks(l.x, l.y, theme.accent, 8);
+          sound.playArmorHit();
+          if (hz.hp <= 0) {
+            hz.alive = false;
+            sound.playExplosion();
+            createSparks(hz.x, hz.y, theme.accent, 18);
+          }
+          break;
+        }
+      } else if (hz.type === 'mine' && hz.alive) {
+        if (Math.hypot(l.x - hz.x, l.y - hz.y) < hz.radius + 4) {
+          l.dead = true; hz.alive = false;
+          sound.playExplosion();
+          createSparks(hz.x, hz.y, '#ef4444', 28);
+          // Вибух знищує блоки бункерів поблизу
+          bunkers.forEach(blocks => blocks.forEach(bl => {
+            if (bl.hp > 0 && Math.hypot(bl.x - hz.x, bl.y - hz.y) < 110) bl.hp = 0;
+          }));
+          break;
+        }
+      } else if (hz.type === 'deflector') {
+        if (Math.abs(l.x - hz.x) < hz.w / 2 && Math.abs(l.y - hz.y) < 12 && l.bounces < 2) {
+          l.bounces++;
+          const spd = Math.hypot(l.vx, l.vy);
+          l.vx = (l.x < hz.x ? -1 : 1) * spd * 0.65 + (Math.random() - 0.5) * 2;
+          l.vy = -l.vy * 0.85;
+          l.y += l.vy * 1.4;
+          sound.playArmorHit();
+          createSparks(l.x, l.y, '#38bdf8', 6);
+          break;
+        }
+      }
+    }
+    if (l.dead) continue;
     // Бункери
     for (let b = 0; b < bunkers.length; b++) {
       const blocks = bunkers[b];
@@ -1668,66 +2446,114 @@ function updateInvadersPhysics() {
     if (invadersShape === 'coop') {
       for (let a = 0; a < aliens.length; a++) {
         const al = aliens[a];
-        if (al.alive && Math.abs(l.x - al.x) < al.w / 2 + 2 && Math.abs(l.y - al.y) < al.h / 2 + 4) {
-          al.alive = false; l.dead = true;
-          createSparks(al.x, al.y, al.color, 16);
-          sound.playExplosion();
-          if (l.from === 1) { p1Score++; p1Hits++; } else { p2Score++; p2Hits++; }
-          updateScoreDOM();
-          if (p1Score >= targetScore || p2Score >= targetScore) {
-            endGame(p1Score >= targetScore ? 1 : 2);
-            return;
+        if (al.alive && Math.abs(l.x - al.x) < al.w / 2 + 3 && Math.abs(l.y - al.y) < al.h / 2 + 5) {
+          l.dead = true;
+          al.hp--;
+          if (al.hp > 0) {
+            sound.playArmorHit();
+            createSparks(l.x, l.y, '#ffffff', 8);
+          } else {
+            al.alive = false;
+            createSparks(al.x, al.y, al.color, al.kind === 'boss' ? 40 : 16);
+            sound.playExplosion();
+            const pts = al.kind === 'boss' ? 3 : 1;
+            if (l.from === 1) { p1Score += pts; p1Hits += pts; } else { p2Score += pts; p2Hits += pts; }
+            if (al.kind === 'boss') {
+              ship1.shields = Math.min(4, ship1.shields + 1);
+              ship2.shields = Math.min(4, ship2.shields + 1);
+              addFloatingText(al.x, al.y, 'БОСА ЗНИЩЕНО! +3 & +🛡️', '#facc15', 0);
+            } else if (al.kind === 'commander') {
+              const pKinds = ['rapid', 'triple', 'shield'];
+              spacePowerups.push({
+                x: al.x, y: al.y,
+                vy: l.from === 1 ? 3.8 : -3.8,
+                kind: pKinds[Math.floor(Math.random() * pKinds.length)]
+              });
+            }
+            updateScoreDOM();
+            if (hasReachedTarget(p1Score) || hasReachedTarget(p2Score)) {
+              endGame(hasReachedTarget(p1Score) ? 1 : 2);
+              return;
+            }
           }
           break;
         }
       }
       if (l.dead) continue;
     }
-    // НЛО
+    // НЛО / Супутник
     if (ufo.active && Math.hypot(l.x - ufo.x, l.y - ufo.y) < 32) {
       createSparks(ufo.x, ufo.y, theme.accent, 24);
       sound.playPowerup();
-      addFloatingText(ufo.x, ufo.y, '+2 ШВИДКИЙ ВОГОНЬ!', '#facc15', 0);
-      ufo.active = false; l.dead = true;
-      if (l.from === 1) {
-        p1Score += 2; p1Hits += 2; ship1.rapidUntil = now + 4500;
+      const bonusPts = invadersShape === 'coop' ? 2 : 1;
+      const sh = l.from === 1 ? ship1 : ship2;
+      if (invadersShape === 'coop') {
+        const pKinds = ['rapid', 'triple', 'shield'];
+        spacePowerups.push({ x: ufo.x, y: ufo.y, vy: l.from === 1 ? 4.2 : -4.2, kind: pKinds[Math.floor(Math.random() * pKinds.length)] });
+        addFloatingText(ufo.x, ufo.y, '+2 КАПСУЛА!', '#facc15', 0, l.from === 2);
       } else {
-        p2Score += 2; p2Hits += 2; ship2.rapidUntil = now + 4500;
+        if (Math.random() < 0.5) {
+          sh.rapidUntil = now + 5000;
+          addFloatingText(ufo.x, ufo.y, '+1 ⚡ ШВИДКІСТЬ!', '#facc15', 0, l.from === 2);
+        } else {
+          sh.tripleUntil = now + 4500;
+          addFloatingText(ufo.x, ufo.y, '+1 🔱 ПОТРІЙНИЙ!', '#38bdf8', 0, l.from === 2);
+        }
       }
+      ufo.active = false; l.dead = true;
+      if (l.from === 1) { p1Score += bonusPts; p1Hits += bonusPts; }
+      else { p2Score += bonusPts; p2Hits += bonusPts; }
       updateScoreDOM();
-      if (p1Score >= targetScore || p2Score >= targetScore) {
-        endGame(p1Score >= targetScore ? 1 : 2);
+      if (hasReachedTarget(p1Score) || hasReachedTarget(p2Score)) {
+        endGame(hasReachedTarget(p1Score) ? 1 : 2);
         return;
       }
       continue;
     }
     // Влучання у гравця
     if (l.from === 1 && Math.abs(l.x - ship2.x) < 30 && Math.abs(l.y - ship2.y) < 20) {
-      l.dead = true; sound.playExplosion();
+      l.dead = true;
       if (invadersShape === 'coop') {
-        triggerCoopFailure(1);
+        if (l.isSide) {
+          createSparks(l.x, l.y, theme.p2, 6);
+        } else {
+          sound.playExplosion();
+          triggerCoopFailure(1);
+          return;
+        }
       } else {
+        sound.playExplosion();
         createSparks(ship2.x, ship2.y, theme.p2, 35);
+        spaceLevel++;
         triggerPoint(1);
+        return;
       }
-      return;
     } else if (l.from === 2 && Math.abs(l.x - ship1.x) < 30 && Math.abs(l.y - ship1.y) < 20) {
-      l.dead = true; sound.playExplosion();
+      l.dead = true;
       if (invadersShape === 'coop') {
-        triggerCoopFailure(2);
+        if (l.isSide) {
+          createSparks(l.x, l.y, theme.p1, 6);
+        } else {
+          sound.playExplosion();
+          triggerCoopFailure(2);
+          return;
+        }
       } else {
+        sound.playExplosion();
         createSparks(ship1.x, ship1.y, theme.p1, 35);
+        spaceLevel++;
         triggerPoint(2);
+        return;
       }
-      return;
     }
   }
   // Постріли прибульців у Кооп режимі
   for (let i = 0; i < alienShots.length; i++) {
     const as = alienShots[i];
     if (as.dead) continue;
+    as.x += (as.vx || 0);
     as.y += as.vy;
-    if (as.y < 0 || as.y > V_HEIGHT) { as.dead = true; continue; }
+    if (as.y < 0 || as.y > V_HEIGHT || as.x < BORDER || as.x > V_WIDTH - BORDER) { as.dead = true; continue; }
     for (let b = 0; b < bunkers.length; b++) {
       const blocks = bunkers[b];
       for (let k = 0; k < blocks.length; k++) {
@@ -1772,8 +2598,8 @@ function triggerCoopFailure(killer) {
   pointTimeoutId = setTimeout(() => {
     pointTimeoutId = null;
     splash.classList.remove('active');
-    lasers = []; alienShots = [];
-    initAliens();
+    lasers = []; alienShots = []; spacePowerups = [];
+    initCoopWave(spaceLevel);
     gameState = 'PLAYING';
   }, 1700);
 }
@@ -1787,12 +2613,80 @@ function triggerCoopShieldWipe() {
     pointTimeoutId = null;
     splash.classList.remove('active');
     lasers = [];
-    initBunkers();
+    initBunkers(false);
     updateScoreDOM();
     gameState = 'PLAYING';
   }, 1700);
 }
 function updateSnakePhysics() {
+  const now = performance.now();
+  // Таймер голоду (7.0с) тікає щокадру незалежно від режиму (піксель/гнучка)
+  snake1.hunger--;
+  snake2.hunger--;
+  if (snake1.hunger === 90 || snake1.hunger === 45 || snake2.hunger === 90 || snake2.hunger === 45) {
+    sound.playWarningTick();
+  }
+  if (snake1.hunger <= 0 || snake2.hunger <= 0) {
+    handleSnakeEnd(snake1.hunger <= 0, snake2.hunger <= 0, 'ГОЛОД');
+    return;
+  }
+  // Золотий плід (стимул у центрі)
+  goldFoodSpawnTimer++;
+  if (!goldFood && goldFoodSpawnTimer >= 420) {
+    goldFoodSpawnTimer = 0;
+    spawnGoldFood();
+  }
+  if (goldFood) {
+    goldFood.life--;
+    if (goldFood.life <= 0) goldFood = null;
+  }
+  function onGoldEaten(playerNum) {
+    sound.playPowerup();
+    goldFood = null;
+    totalHits++;
+    if (playerNum === 1) {
+      snake1.hunger = HUNGER_MAX_FRAMES;
+      snake1.boostUntil = now + 2600;
+      p1Score++;
+      addFloatingText(V_WIDTH / 2, V_HEIGHT / 2 + 60, '★ ЗОЛОТО Г1 +1!', '#facc15', 0);
+    } else {
+      snake2.hunger = HUNGER_MAX_FRAMES;
+      snake2.boostUntil = now + 2600;
+      p2Score++;
+      addFloatingText(V_WIDTH / 2, V_HEIGHT / 2 - 60, '★ ЗОЛОТО Г2 +1!', '#facc15', 0, true);
+    }
+    updateScoreDOM();
+    if (hasReachedTarget(p1Score) || hasReachedTarget(p2Score)) {
+      endGame(hasReachedTarget(p1Score) ? 1 : 2);
+      return true;
+    }
+    return false;
+  }
+  function checkSurvivalLevelUp() {
+    if (snakeRoundFood >= 10) {
+      snakeLevel++;
+      p1Score++; p2Score++;
+      updateScoreDOM();
+      if (hasReachedTarget(p1Score) || hasReachedTarget(p2Score)) {
+        endGame(p1Score >= p2Score ? 1 : 2);
+        return true;
+      }
+      sound.playGoal();
+      const splash = document.getElementById('goal-splash');
+      splash.innerText = `ВИЖИЛИ! +1 ОЧКО • АРЕНА ${snakeLevel}`;
+      splash.className = 'p1-color active';
+      gameState = 'POINT_PAUSE';
+      clearTimeout(pointTimeoutId);
+      pointTimeoutId = setTimeout(() => {
+        pointTimeoutId = null;
+        splash.classList.remove('active');
+        initSnakeMatch();
+        gameState = 'PLAYING';
+      }, 1400);
+      return true;
+    }
+    return false;
+  }
   if (snakeStyleMode === 'pixel') {
     snakeTickCounter++;
     if (snakeTickCounter < 6) return;
@@ -1810,6 +2704,8 @@ function updateSnakePhysics() {
       h2.x = ((h2.x % GRID_COLS) + GRID_COLS) % GRID_COLS;
       h2.y = ((h2.y % GRID_ROWS) + GRID_ROWS) % GRID_ROWS;
     }
+    if (!crash1 && snakeGridBlocked[h1.x] && snakeGridBlocked[h1.x][h1.y]) crash1 = true;
+    if (!crash2 && snakeGridBlocked[h2.x] && snakeGridBlocked[h2.x][h2.y]) crash2 = true;
     if (h1.x === h2.x && h1.y === h2.y) { crash1 = true; crash2 = true; }
     for (let i = 0; i < snake1.body.length - 1; i++) {
       if (h1.x === snake1.body[i].x && h1.y === snake1.body[i].y) crash1 = true;
@@ -1819,20 +2715,24 @@ function updateSnakePhysics() {
       if (h1.x === snake2.body[i].x && h1.y === snake2.body[i].y) crash1 = true;
       if (h2.x === snake2.body[i].x && h2.y === snake2.body[i].y) crash2 = true;
     }
-    if (crash1 || crash2) { handleSnakeCrash(crash1, crash2); return; }
+    if (crash1 || crash2) { handleSnakeEnd(crash1, crash2, 'ЗІТКНЕННЯ'); return; }
     snake1.body.unshift(h1); snake2.body.unshift(h2);
     let eat1 = false, eat2 = false;
     for (let i = snakeFoods.length - 1; i >= 0; i--) {
       const f = snakeFoods[i];
-      if (h1.x === f.gx && h1.y === f.gy) { eat1 = true; snakeFoods.splice(i, 1); sound.playEat(); }
-      else if (h2.x === f.gx && h2.y === f.gy) { eat2 = true; snakeFoods.splice(i, 1); sound.playEat(); }
+      if (h1.x === f.gx && h1.y === f.gy) { eat1 = true; snakeFoods.splice(i, 1); sound.playEat(); snake1.hunger = HUNGER_MAX_FRAMES; snakeRoundFood++; }
+      else if (h2.x === f.gx && h2.y === f.gy) { eat2 = true; snakeFoods.splice(i, 1); sound.playEat(); snake2.hunger = HUNGER_MAX_FRAMES; snakeRoundFood++; }
+    }
+    if (goldFood) {
+      if (h1.x === goldFood.gx && h1.y === goldFood.gy) { eat1 = true; if (onGoldEaten(1)) return; }
+      else if (h2.x === goldFood.gx && h2.y === goldFood.gy) { eat2 = true; if (onGoldEaten(2)) return; }
     }
     if (!eat1) snake1.body.pop(); else { totalHits++; p1Hits = snake1.body.length; }
     if (!eat2) snake2.body.pop(); else { totalHits++; p2Hits = snake2.body.length; }
     if (snakeFoods.length < 4) spawnSnakeFood(4);
     updateScoreDOM();
+    checkSurvivalLevelUp();
   } else {
-    // Клавіатурне керування в гнучкому режимі
     if (keyState['KeyA']) snake1.targetAngle -= 0.08;
     if (keyState['KeyD']) snake1.targetAngle += 0.08;
     if (keyState['ArrowLeft']) snake2.targetAngle -= 0.08;
@@ -1842,9 +2742,10 @@ function updateSnakePhysics() {
       while (diff < -Math.PI) diff += Math.PI * 2;
       while (diff > Math.PI) diff -= Math.PI * 2;
       s.angle += Math.max(-0.14, Math.min(0.14, diff * 0.14));
+      const spd = now < s.boostUntil ? s.speed * 1.24 : s.speed;
       return {
-        x: s.body[0].x + Math.cos(s.angle) * s.speed,
-        y: s.body[0].y + Math.sin(s.angle) * s.speed
+        x: s.body[0].x + Math.cos(s.angle) * spd,
+        y: s.body[0].y + Math.sin(s.angle) * spd
       };
     }
     let h1 = stepFlex(snake1);
@@ -1861,6 +2762,16 @@ function updateSnakePhysics() {
       if (h2.x < minX) h2.x = maxX; else if (h2.x > maxX) h2.x = minX;
       if (h2.y < minY) h2.y = maxY; else if (h2.y > maxY) h2.y = minY;
     }
+    // Колізії гнучкої змійки з перешкодами рівня (зі злегка м'яким хітбоксом r=8)
+    for (let i = 0; i < snakeObstacles.length; i++) {
+      const ob = snakeObstacles[i];
+      const cx1 = Math.max(ob.x, Math.min(h1.x, ob.x + ob.w));
+      const cy1 = Math.max(ob.y, Math.min(h1.y, ob.y + ob.h));
+      if (Math.hypot(h1.x - cx1, h1.y - cy1) < 8) crash1 = true;
+      const cx2 = Math.max(ob.x, Math.min(h2.x, ob.x + ob.w));
+      const cy2 = Math.max(ob.y, Math.min(h2.y, ob.y + ob.h));
+      if (Math.hypot(h2.x - cx2, h2.y - cy2) < 8) crash2 = true;
+    }
     if (Math.hypot(h1.x - h2.x, h1.y - h2.y) < 21) { crash1 = true; crash2 = true; }
     for (let i = 0; i < snake1.body.length; i++) {
       if (i >= 16 && Math.hypot(h1.x - snake1.body[i].x, h1.y - snake1.body[i].y) < 15) crash1 = true;
@@ -1870,13 +2781,17 @@ function updateSnakePhysics() {
       if (Math.hypot(h1.x - snake2.body[i].x, h1.y - snake2.body[i].y) < 16) crash1 = true;
       if (i >= 16 && Math.hypot(h2.x - snake2.body[i].x, h2.y - snake2.body[i].y) < 15) crash2 = true;
     }
-    if (crash1 || crash2) { handleSnakeCrash(crash1, crash2); return; }
+    if (crash1 || crash2) { handleSnakeEnd(crash1, crash2, 'ЗІТКНЕННЯ'); return; }
     snake1.body.unshift(h1); snake2.body.unshift(h2);
     let eat1 = false, eat2 = false;
     for (let i = snakeFoods.length - 1; i >= 0; i--) {
       const f = snakeFoods[i];
-      if (Math.hypot(h1.x - f.x, h1.y - f.y) < 24) { eat1 = true; snakeFoods.splice(i, 1); sound.playEat(); }
-      else if (Math.hypot(h2.x - f.x, h2.y - f.y) < 24) { eat2 = true; snakeFoods.splice(i, 1); sound.playEat(); }
+      if (Math.hypot(h1.x - f.x, h1.y - f.y) < 24) { eat1 = true; snakeFoods.splice(i, 1); sound.playEat(); snake1.hunger = HUNGER_MAX_FRAMES; snakeRoundFood++; }
+      else if (Math.hypot(h2.x - f.x, h2.y - f.y) < 24) { eat2 = true; snakeFoods.splice(i, 1); sound.playEat(); snake2.hunger = HUNGER_MAX_FRAMES; snakeRoundFood++; }
+    }
+    if (goldFood) {
+      if (Math.hypot(h1.x - goldFood.x, h1.y - goldFood.y) < 26) { eat1 = true; if (onGoldEaten(1)) return; }
+      else if (Math.hypot(h2.x - goldFood.x, h2.y - goldFood.y) < 26) { eat2 = true; if (onGoldEaten(2)) return; }
     }
     if (!eat1) snake1.body.pop(); else {
       totalHits++; p1Hits = Math.floor(snake1.body.length / 4);
@@ -1888,42 +2803,44 @@ function updateSnakePhysics() {
     }
     if (snakeFoods.length < 4) spawnSnakeFood(4);
     updateScoreDOM();
+    checkSurvivalLevelUp();
   }
 }
-function handleSnakeCrash(crash1, crash2) {
+function handleSnakeEnd(fail1, fail2, reason) {
   sound.playExplosion();
   const splash = document.getElementById('goal-splash');
-  if (crash1 && crash2) {
-    splash.innerText = 'ЛОБОВИЙ УДАР! НІЧИЯ';
+  if (fail1 && fail2) {
+    splash.innerText = reason === 'ГОЛОД' ? 'ОБИДВІ ЗАГИНУЛИ ВІД ГОЛОДУ! НІЧИЯ' : 'ЛОБОВИЙ УДАР! НІЧИЯ';
     splash.className = 'active';
-  } else if (crash1) {
+  } else if (fail1) {
     p2Score++;
-    splash.innerText = 'Г1 ВРІЗАВСЯ! ОЧКО Г2';
+    splash.innerText = reason === 'ГОЛОД' ? 'Г1 ЗАГИНУВ ВІД ГОЛОДУ! ОЧКО Г2' : 'Г1 ВРІЗАВСЯ! ОЧКО Г2';
     splash.className = 'p2-color active';
   } else {
     p1Score++;
-    splash.innerText = 'Г2 ВРІЗАВСЯ! ОЧКО Г1';
+    splash.innerText = reason === 'ГОЛОД' ? 'Г2 ЗАГИНУВ ВІД ГОЛОДУ! ОЧКО Г1' : 'Г2 ВРІЗАВСЯ! ОЧКО Г1';
     splash.className = 'p1-color active';
   }
+  snakeLevel++;
   updateScoreDOM();
   gameState = 'POINT_PAUSE';
   clearTimeout(pointTimeoutId);
   pointTimeoutId = setTimeout(() => {
     pointTimeoutId = null;
     splash.classList.remove('active');
-    if (p1Score >= targetScore || p2Score >= targetScore) endGame(p1Score >= targetScore ? 1 : 2);
+    if (hasReachedTarget(p1Score) || hasReachedTarget(p2Score)) endGame(p1Score >= targetScore ? 1 : 2);
     else { initSnakeMatch(); gameState = 'PLAYING'; }
-  }, 1450);
+  }, 1500);
 }
 /**
- * МАРІО ДУЕТ: ФІЗИКА ТА БОНУСИ
+ * МАРІО ДУЕТ: ФІЗИКА, РУХОМІ ПЛАТФОРМИ, ПРУЖИНИ, ВОРОГИ ТА БОНУСИ
  */
 function awardMarioScore(playerNum, pts, popupText, x, y) {
   if (playerNum === 1) p1Score += pts; else p2Score += pts;
   if (popupText) addFloatingText(x, y - 28, popupText, '#facc15', playerNum);
   updateScoreDOM();
-  if (p1Score >= targetScore || p2Score >= targetScore) {
-    endGame(p1Score >= targetScore ? 1 : 2);
+  if (hasReachedTarget(p1Score) || hasReachedTarget(p2Score)) {
+    endGame(hasReachedTarget(p1Score) ? 1 : 2);
     return true;
   }
   return false;
@@ -1939,6 +2856,18 @@ function updateMarioPhysics() {
     right: marioControls.p2.right || keyState['ArrowRight'],
     jump: marioControls.p2.jump || keyState['ArrowUp']
   };
+  // Оновлення рухомих платформ і батутів
+  for (let i = 0; i < marioWorld.movingPlatforms.length; i++) {
+    const plat = marioWorld.movingPlatforms[i];
+    const prevX = plat.x;
+    plat.x += plat.vx;
+    if (plat.x <= plat.minX) { plat.x = plat.minX; plat.vx = Math.abs(plat.vx); }
+    else if (plat.x >= plat.maxX) { plat.x = plat.maxX; plat.vx = -Math.abs(plat.vx); }
+    plat.dx = plat.x - prevX;
+  }
+  for (let i = 0; i < marioWorld.springs.length; i++) {
+    if (marioWorld.springs[i].bounceAnim > 0) marioWorld.springs[i].bounceAnim--;
+  }
   function isSolidForPlayer(b, pNum) {
     if (b.type === 'brick') return !(pNum === 1 ? b.brokenP1 : b.brokenP2);
     return true;
@@ -1958,19 +2887,20 @@ function updateMarioPhysics() {
     sound.playExplosion();
     createSparks(p.x, p.y, '#ef4444', 20);
     if (p.lives <= 0) {
-      // Суперник отримує +2 очки, гравець відроджується за 1.5с із 3 життями
       const oppNum = pNum === 1 ? 2 : 1;
       addFloatingText(p.x, p.y - 30, 'ВТРАТА ВСІХ ЖИТТІВ!', '#ef4444', pNum);
       p.respawnTimer = 90;
       p.lives = 3;
       p.big = false;
-      if (awardMarioScore(oppNum, 2, 'СУПЕРНИК ВПАВ +2!', oppNum === 1 ? p1Runner.x : p2Runner.x, 380)) return;
+      p.ridingPlat = null;
+      awardMarioScore(oppNum, 2, 'СУПЕРНИК ВПАВ +2!', oppNum === 1 ? p1Runner.x : p2Runner.x, 380);
       return;
     }
     if (isPit) {
       p.x = p.lastSafeX;
       p.y = p.lastSafeY - 36;
       p.vx = 0; p.vy = 0;
+      p.ridingPlat = null;
       p.invuln = 85;
     } else {
       p.invuln = 85;
@@ -1981,7 +2911,7 @@ function updateMarioPhysics() {
   function bumpEnemyAboveBlock(b, pNum) {
     marioWorld.enemies.forEach(e => {
       if (!e.alive || e.type === 'piranha') return;
-      if (e.x > b.x - 10 && e.x < b.x + b.w + 10 && Math.abs((e.y + 16) - b.y) < 14) {
+      if (e.x > b.x - 10 && e.x < b.x + b.w + 10 && Math.abs((e.y + 16) - b.y) < 16) {
         e.alive = false;
         sound.playHit(1.5);
         createSparks(e.x, e.y, '#facc15', 14);
@@ -1990,17 +2920,22 @@ function updateMarioPhysics() {
     });
   }
   function updatePlayer(p, pNum, ctrl, prevCtrl) {
+    if (gameState !== 'PLAYING') return;
     if (p.respawnTimer > 0) {
       p.respawnTimer--;
       if (p.respawnTimer === 0) {
         p.x = p.lastSafeX; p.y = p.lastSafeY - 36;
-        p.vx = 0; p.vy = 0; p.invuln = 90;
+        p.vx = 0; p.vy = 0; p.invuln = 90; p.ridingPlat = null;
         updateScoreDOM();
       }
       return;
     }
     if (p.invuln > 0) p.invuln--;
     if (p.starTimer > 0) p.starTimer--;
+    if (p.ridingPlat) {
+      p.x += p.ridingPlat.dx;
+      p.ridingPlat = null;
+    }
     const speedCap = p.starTimer > 0 ? 5.6 : 4.7;
     if (ctrl.left && !ctrl.right) {
       p.vx = Math.max(-speedCap, p.vx - 0.72);
@@ -2024,7 +2959,6 @@ function updateMarioPhysics() {
       p.jumpBuffer = 0;
       sound.playJump();
     }
-    // Змінна висота стрибка при відпусканні кнопки
     if (!ctrl.jump && p.vy < -5.5) {
       p.vy *= 0.65;
     }
@@ -2033,7 +2967,7 @@ function updateMarioPhysics() {
     const halfW = 13;
     const topOff = p.big ? 36 : 28;
     const botOff = 18;
-    // 1. Горизонтальний рух та колізії зі стінами/трубами/сходами
+    // 1. Горизонтальний рух та колізії зі стінами
     p.x += p.vx;
     p.x = Math.max(24, Math.min(marioWorld.flagX + 180, p.x));
     for (let i = 0; i < marioWorld.blocks.length; i++) {
@@ -2046,7 +2980,7 @@ function updateMarioPhysics() {
         }
       }
     }
-    // 2. Вертикальний рух та колізії з підлогою/блоками
+    // 2. Вертикальний рух та колізії з блоками і рухомими платформами
     p.y += p.vy;
     p.onGround = false;
     for (let i = 0; i < marioWorld.blocks.length; i++) {
@@ -2057,11 +2991,9 @@ function updateMarioPhysics() {
           p.y = b.y - botOff;
           p.vy = 0;
           p.onGround = true;
-          if (b.type === 'ground' || b.type === 'step') {
-            if (p.x > b.x + 18 && p.x < b.x + b.w - 18) {
-              p.lastSafeX = p.x;
-              p.lastSafeY = b.y;
-            }
+          if ((b.type === 'ground' || b.type === 'step') && p.x > b.x + 24 && p.x < b.x + b.w - 24) {
+            p.lastSafeX = p.x;
+            p.lastSafeY = b.y;
           }
         } else if (p.vy < 0 && p.y - topOff < b.y + b.h && p.y - topOff - p.vy >= b.y + b.h - 14) {
           p.y = b.y + b.h + topOff;
@@ -2071,6 +3003,7 @@ function updateMarioPhysics() {
             if (!alreadyUsed) {
               if (pNum === 1) { b.usedP1 = true; b.bumpP1 = 10; } else { b.usedP2 = true; b.bumpP2 = 10; }
               bumpEnemyAboveBlock(b, pNum);
+              if (gameState !== 'PLAYING') return;
               if (b.item === 'mushroom') {
                 marioWorld.powerups.push({
                   type: 'mushroom', owner: pNum,
@@ -2102,6 +3035,7 @@ function updateMarioPhysics() {
             }
           } else if (b.type === 'brick') {
             bumpEnemyAboveBlock(b, pNum);
+            if (gameState !== 'PLAYING') return;
             if (p.big) {
               if (pNum === 1) b.brokenP1 = true; else b.brokenP2 = true;
               sound.playHit(1.5);
@@ -2115,15 +3049,41 @@ function updateMarioPhysics() {
         }
       }
     }
+    // Колізія з рухомими платформами
+    for (let i = 0; i < marioWorld.movingPlatforms.length; i++) {
+      const plat = marioWorld.movingPlatforms[i];
+      if (p.x + halfW - 2 > plat.x && p.x - halfW + 2 < plat.x + plat.w) {
+        if (p.vy >= 0 && p.y + botOff > plat.y && p.y + botOff - p.vy <= plat.y + 14) {
+          p.y = plat.y - botOff;
+          p.vy = 0;
+          p.onGround = true;
+          p.ridingPlat = plat;
+        }
+      }
+    }
+    // Пружинні батути
+    for (let i = 0; i < marioWorld.springs.length; i++) {
+      const spr = marioWorld.springs[i];
+      if (p.x + halfW > spr.x && p.x - halfW < spr.x + spr.w &&
+          p.y + botOff >= spr.y - 2 && p.y + botOff <= spr.y + spr.h + 8 && p.vy >= 0) {
+        p.y = spr.y - botOff;
+        p.vy = -19.2;
+        p.onGround = false;
+        spr.bounceAnim = 10;
+        sound.playSpring();
+        createSparks(spr.x + spr.w / 2, spr.y, '#facc15', 10);
+      }
+    }
     if (p.y > 675) {
       hurtPlayer(p, pNum, true);
     }
   }
   updatePlayer(p1Runner, 1, c1, { jump: marioControls.p1.prevJump });
+  if (gameState !== 'PLAYING') return;
   updatePlayer(p2Runner, 2, c2, { jump: marioControls.p2.prevJump });
+  if (gameState !== 'PLAYING') return;
   marioControls.p1.prevJump = c1.jump;
   marioControls.p2.prevJump = c2.jump;
-  // Анімації блоків та монетних сплесків
   marioWorld.blocks.forEach(b => {
     if (b.bumpP1 > 0) b.bumpP1 *= 0.72;
     if (b.bumpP2 > 0) b.bumpP2 *= 0.72;
@@ -2133,7 +3093,7 @@ function updateMarioPhysics() {
     pc.y += pc.vy; pc.vy += 0.55; pc.life--;
     if (pc.life <= 0) marioWorld.popCoins.splice(i, 1);
   }
-  // Бонуси (Гриб та Зірочка)
+  // Бонуси
   for (let i = marioWorld.powerups.length - 1; i >= 0; i--) {
     const pu = marioWorld.powerups[i];
     if (!pu.active) { marioWorld.powerups.splice(i, 1); continue; }
@@ -2165,66 +3125,89 @@ function updateMarioPhysics() {
     }
     if (pu.y > 700) pu.active = false;
   }
-  // Розумні вороги (Гумба, Купа, Піранья)
-  marioWorld.enemies.forEach(e => {
+  // Вороги (Гумби, Купи, Паратрупи, Піраньї)
+  for (let ei = 0; ei < marioWorld.enemies.length; ei++) {
+    const e = marioWorld.enemies[ei];
     if (!e.alive) {
       if (e.squished) {
         e.squishTimer--;
         if (e.squishTimer <= 0) e.squished = false;
       }
-      return;
+      continue;
     }
     if (e.type === 'goomba') {
       e.x += e.vx;
       if (e.x <= e.minX) { e.x = e.minX; e.vx = Math.abs(e.vx); }
       else if (e.x >= e.maxX) { e.x = e.maxX; e.vx = -Math.abs(e.vx); }
-      [[p1Runner, 1], [p2Runner, 2]].forEach(([p, pNum]) => {
-        if (p.respawnTimer > 0) return;
+      const pairs = [[p1Runner, 1], [p2Runner, 2]];
+      for (let pi = 0; pi < pairs.length; pi++) {
+        const [p, pNum] = pairs[pi];
+        if (p.respawnTimer > 0) continue;
         if (Math.abs(p.x - e.x) < 25 && Math.abs(p.y - e.y) < 28) {
           if (p.starTimer > 0 || (p.vy > 0 && p.y < e.y - 4)) {
             e.alive = false; e.squished = true; e.squishTimer = 24;
             if (p.starTimer === 0) p.vy = -11.5;
             sound.playHit(1.6); createSparks(e.x, e.y, '#c084fc', 14);
-            awardMarioScore(pNum, 1, '+1!', e.x, e.y);
+            if (awardMarioScore(pNum, 1, '+1!', e.x, e.y)) return;
           } else {
             hurtPlayer(p, pNum, false);
+            if (gameState !== 'PLAYING') return;
           }
         }
-      });
-    } else if (e.type === 'koopa') {
+      }
+    } else if (e.type === 'koopa' || e.type === 'parakoopa') {
       if (e.shellGrace > 0) e.shellGrace--;
-      if (e.inShell) {
+      if (e.type === 'parakoopa' && e.winged) {
+        e.x += e.vx;
+        if (e.x <= e.minX) { e.x = e.minX; e.vx = Math.abs(e.vx); }
+        else if (e.x >= e.maxX) { e.x = e.maxX; e.vx = -Math.abs(e.vx); }
+        e.vy += 0.32;
+        e.y += e.vy;
+        if (e.y >= e.baseY) { e.y = e.baseY; e.vy = -6.8; }
+      } else if (e.inShell) {
         if (e.shellSpeed !== 0) {
           e.x += e.shellSpeed;
           if (e.x <= e.minX || e.x >= e.maxX) {
             e.shellSpeed = -e.shellSpeed;
             sound.playWallBounce();
           }
-          marioWorld.enemies.forEach(other => {
-            if (other !== e && other.alive && other.type !== 'piranha' && Math.abs(other.x - e.x) < 26) {
+          for (let oi = 0; oi < marioWorld.enemies.length; oi++) {
+            const other = marioWorld.enemies[oi];
+            if (other !== e && other.alive && other.type !== 'piranha' && Math.abs(other.x - e.x) < 26 && Math.abs(other.y - e.y) < 28) {
               other.alive = false;
               sound.playHit(1.5);
               createSparks(other.x, other.y, '#10b981', 12);
-              awardMarioScore(e.kicker || 1, 1, 'КОМБО +1!', other.x, other.y);
+              if (awardMarioScore(e.kicker || 1, 1, 'КОМБО +1!', other.x, other.y)) return;
             }
-          });
+          }
         }
       } else {
         e.x += e.vx;
         if (e.x <= e.minX) { e.x = e.minX; e.vx = Math.abs(e.vx); }
         else if (e.x >= e.maxX) { e.x = e.maxX; e.vx = -Math.abs(e.vx); }
       }
-      [[p1Runner, 1], [p2Runner, 2]].forEach(([p, pNum]) => {
-        if (p.respawnTimer > 0) return;
+      const pairs = [[p1Runner, 1], [p2Runner, 2]];
+      for (let pi = 0; pi < pairs.length; pi++) {
+        const [p, pNum] = pairs[pi];
+        if (p.respawnTimer > 0) continue;
         if (Math.abs(p.x - e.x) < 25 && Math.abs(p.y - e.y) < 28) {
           if (p.starTimer > 0) {
             e.alive = false; sound.playHit(1.7); createSparks(e.x, e.y, '#16a34a', 14);
-            awardMarioScore(pNum, 1, '+1!', e.x, e.y);
+            if (awardMarioScore(pNum, 1, '+1!', e.x, e.y)) return;
+          } else if (e.winged) {
+            if (p.vy > 0 && p.y < e.y - 2) {
+              e.winged = false; e.y = e.baseY; e.vy = 0;
+              p.vy = -11; sound.playHit(1.5);
+              if (awardMarioScore(pNum, 1, 'КРИЛА ЗБИТО +1!', e.x, e.y)) return;
+            } else {
+              hurtPlayer(p, pNum, false);
+              if (gameState !== 'PLAYING') return;
+            }
           } else if (p.vy > 0 && p.y < e.y - 4) {
             if (!e.inShell) {
               e.inShell = true; e.shellSpeed = 0; e.shellGrace = 12;
               p.vy = -11; sound.playHit(1.5);
-              awardMarioScore(pNum, 1, 'ПАНЦИР +1!', e.x, e.y);
+              if (awardMarioScore(pNum, 1, 'ПАНЦИР +1!', e.x, e.y)) return;
             } else {
               e.shellSpeed = p.x < e.x ? 8 : -8;
               e.kicker = pNum; e.shellGrace = 14;
@@ -2236,9 +3219,10 @@ function updateMarioPhysics() {
             sound.playHit(1.5);
           } else if (e.shellGrace === 0) {
             hurtPlayer(p, pNum, false);
+            if (gameState !== 'PLAYING') return;
           }
         }
-      });
+      }
     } else if (e.type === 'piranha') {
       const playerOnPipe =
         (Math.abs(p1Runner.x - e.x) < 34 && p1Runner.y < e.pipeY) ||
@@ -2247,7 +3231,6 @@ function updateMarioPhysics() {
         e.timer = 0;
       } else {
         e.timer++;
-        // Плавна синусоїда виходу з труби
         const cycle = (e.timer % 180) / 180;
         if (cycle < 0.5) e.offset = 0;
         else {
@@ -2256,26 +3239,30 @@ function updateMarioPhysics() {
         }
       }
       if (e.offset < -8) {
-        [[p1Runner, 1], [p2Runner, 2]].forEach(([p, pNum]) => {
-          if (p.respawnTimer > 0) return;
+        const pairs = [[p1Runner, 1], [p2Runner, 2]];
+        for (let pi = 0; pi < pairs.length; pi++) {
+          const [p, pNum] = pairs[pi];
+          if (p.respawnTimer > 0) continue;
           if (Math.abs(p.x - e.x) < 22 && Math.abs(p.y - (e.y + e.offset)) < 24) {
             if (p.starTimer > 0) {
               e.alive = false; sound.playHit(1.6); createSparks(e.x, e.y + e.offset, '#ef4444', 14);
-              awardMarioScore(pNum, 1, '+1!', e.x, e.y + e.offset);
+              if (awardMarioScore(pNum, 1, '+1!', e.x, e.y + e.offset)) return;
             } else {
               hurtPlayer(p, pNum, false);
+              if (gameState !== 'PLAYING') return;
             }
           }
-        });
+        }
       }
     }
-  });
-  // Монети (окремий збір для Г1 і Г2 щоб обидва мали рівні умови!)
-  marioWorld.coins.forEach(c => {
+  }
+  // Монети
+  for (let i = 0; i < marioWorld.coins.length; i++) {
+    const c = marioWorld.coins[i];
     if (!c.gotP1 && p1Runner.respawnTimer === 0 && Math.hypot(p1Runner.x - c.x, p1Runner.y - c.y) < 28) {
       c.gotP1 = true; p1Runner.coins++; totalHits++; sound.playCoin();
       if (p1Runner.coins % 3 === 0) {
-        awardMarioScore(1, 1, '+1 ★', c.x, c.y);
+        if (awardMarioScore(1, 1, '+1 ★', c.x, c.y)) return;
       } else {
         addFloatingText(c.x, c.y, '+1 🪙', '#facc15', 1);
         updateScoreDOM();
@@ -2284,14 +3271,13 @@ function updateMarioPhysics() {
     if (!c.gotP2 && p2Runner.respawnTimer === 0 && Math.hypot(p2Runner.x - c.x, p2Runner.y - c.y) < 28) {
       c.gotP2 = true; p2Runner.coins++; totalHits++; sound.playCoin();
       if (p2Runner.coins % 3 === 0) {
-        awardMarioScore(2, 1, '+1 ★', c.x, c.y);
+        if (awardMarioScore(2, 1, '+1 ★', c.x, c.y)) return;
       } else {
         addFloatingText(c.x, c.y, '+1 🪙', '#facc15', 2);
         updateScoreDOM();
       }
     }
-  });
-  // Флагшток фінішу
+  }
   // Флагшток фінішу
   if (!marioWorld.flagReached && (p1Runner.x >= marioWorld.flagX || p2Runner.x >= marioWorld.flagX)) {
     const winner = p1Runner.x >= marioWorld.flagX ? 1 : 2;
@@ -2300,8 +3286,8 @@ function updateMarioPhysics() {
     if (winner === 1) p1Score += 5; else p2Score += 5;
     totalHits++;
     updateScoreDOM();
-    if (p1Score >= targetScore || p2Score >= targetScore) {
-      endGame(p1Score >= targetScore ? 1 : 2);
+    if (hasReachedTarget(p1Score) || hasReachedTarget(p2Score)) {
+      endGame(hasReachedTarget(p1Score) ? 1 : 2);
       return;
     }
     const splash = document.getElementById('goal-splash');
@@ -2322,43 +3308,45 @@ function updateMarioPhysics() {
   p1Hits = p1Runner.coins;
   p2Hits = p2Runner.coins;
   const maxDist = Math.floor(Math.max(p1Runner.x, p2Runner.x) / 10);
-  document.getElementById('stat-rally').innerText = maxDist + 'м';
+  document.getElementById('stat-rally').innerText = `Р${marioWorld.level} • ${maxDist}м`;
   updateScoreDOM();
 }
-function triggerPoint(scorer) {
+function triggerPoint(scorer, points = 1, customSplash = null) {
   gameState = 'POINT_PAUSE';
   sound.playGoal();
   rallyHits = 0;
-  document.getElementById('stat-rally').innerText = '0';
-  if (scorer === 1) p1Score++; else p2Score++;
+  if (scorer === 1) p1Score += points; else p2Score += points;
   updateScoreDOM();
   const splash = document.getElementById('goal-splash');
-  splash.innerText = currentMode === 'HOCKEY' ? `ГОЛ! ГРАВЕЦЬ ${scorer}` : `ВЛУЧАННЯ! Г${scorer}`;
+  if (customSplash) {
+    splash.innerText = customSplash;
+  } else if (currentMode === 'HOCKEY') {
+    splash.innerText = `ГОЛ! ГРАВЕЦЬ ${scorer}`;
+  } else {
+    splash.innerText = `ВЛУЧАННЯ! Г${scorer} • РАУНД ${spaceLevel}`;
+  }
   splash.className = (scorer === 1 ? 'p1-color' : 'p2-color') + ' active';
   clearTimeout(pointTimeoutId);
   pointTimeoutId = setTimeout(() => {
     pointTimeoutId = null;
     splash.classList.remove('active');
-    if (p1Score >= targetScore || p2Score >= targetScore) {
-      endGame(p1Score >= targetScore ? 1 : 2);
+    if (hasReachedTarget(p1Score) || hasReachedTarget(p2Score)) {
+      endGame(hasReachedTarget(p1Score) ? 1 : 2);
     } else {
       if (currentMode === 'HOCKEY') {
         resetPuck(scorer === 1 ? 2 : 1);
+        hockeyOrbs = []; hockeyOrbTimer = 0;
+        mallet1.bigTimer = 0; mallet1.smallTimer = 0; mallet1.campFrames = 0;
+        mallet2.bigTimer = 0; mallet2.smallTimer = 0; mallet2.campFrames = 0;
       } else {
         lasers = [];
         alienShots = [];
+        spacePowerups = [];
+        if (invadersShape !== 'coop') initSpacePvpArena(spaceLevel);
       }
       gameState = 'PLAYING';
     }
   }, 1350);
-}
-function resetPuck(targetP) {
-  puck.x = V_WIDTH / 2;
-  if (targetP === 0) puck.y = V_HEIGHT / 2;
-  else puck.y = targetP === 1 ? V_HEIGHT / 2 + 150 : V_HEIGHT / 2 - 150;
-  puck.vx = 0;
-  puck.vy = 0;
-  puckTrail = [];
 }
 function endGame(winner) {
   clearPendingPointTimeout();
@@ -2384,45 +3372,82 @@ function updateScoreDOM() {
     const sh = theme.isBW ? '◈' : '🛡️';
     document.getElementById('p1-hits').innerText = `${p1Hits} • ${sh}${ship1.shields}`;
     document.getElementById('p2-hits').innerText = `${p2Hits} • ${sh}${ship2.shields}`;
+    document.getElementById('stat-rally').innerText = `Хв.${spaceLevel} (${rallyHits})`;
+  } else if (currentMode === 'INVADERS') {
+    document.getElementById('p1-hits').innerText = p1Hits;
+    document.getElementById('p2-hits').innerText = p2Hits;
+    document.getElementById('stat-rally').innerText = `Арена ${spaceLevel}`;
+  } else if (currentMode === 'SNAKE') {
+    document.getElementById('p1-hits').innerText = `${p1Hits} • ${(Math.max(0, snake1.hunger) / 60).toFixed(1)}с`;
+    document.getElementById('p2-hits').innerText = `${p2Hits} • ${(Math.max(0, snake2.hunger) / 60).toFixed(1)}с`;
+    document.getElementById('stat-rally').innerText = `Арена ${snakeLevel}`;
   } else {
     document.getElementById('p1-hits').innerText = p1Hits;
     document.getElementById('p2-hits').innerText = p2Hits;
-  }
-  if (currentMode !== 'MARIO') {
     document.getElementById('stat-rally').innerText = rallyHits;
   }
   document.getElementById('stat-total-hits').innerText = totalHits;
 }
 /**
+ * ============================================================================
  * ВІДМАЛЬОВКА ВСІХ 4 ІГОР (БАРВИСТА + СТРОГІ Ч/Б ТЕМИ)
+ * ============================================================================
  */
+function drawHockeyOrbs(theme) {
+  hockeyOrbs.forEach(orb => {
+    const pulseR = orb.radius + Math.sin(orb.pulse) * 3;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(orb.x, orb.y, pulseR, 0, Math.PI * 2);
+    if (theme.isBW) {
+      ctx.fillStyle = theme.surface;
+      ctx.fill();
+      ctx.lineWidth = 3.5;
+      ctx.strokeStyle = theme.fg;
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = orb.type === 'big' ? 'rgba(0, 240, 255, 0.22)' : (orb.type === 'shrink' ? 'rgba(255, 0, 85, 0.22)' : 'rgba(250, 204, 21, 0.24)');
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = orb.type === 'big' ? '#00f0ff' : (orb.type === 'shrink' ? '#ff0055' : '#facc15');
+      ctx.stroke();
+    }
+    // Дуга зникаючого часу
+    ctx.beginPath();
+    ctx.arc(orb.x, orb.y, pulseR + 5, -Math.PI / 2, -Math.PI / 2 + (orb.life / 540) * Math.PI * 2);
+    ctx.strokeStyle = theme.isBW ? theme.fg : '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = theme.isBW ? theme.fg : '#ffffff';
+    ctx.font = 'bold 20px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(orb.type === 'big' ? '⚡' : (orb.type === 'shrink' ? '▼' : '✦'), orb.x, orb.y + 1);
+    ctx.restore();
+  });
+}
 function drawHockeyField() {
   const theme = getThemeColors();
   const gL = (V_WIDTH - GOAL_WIDTH) / 2;
   const gR = (V_WIDTH + GOAL_WIDTH) / 2;
+  const isFirePuck = rallyHits >= 6;
   if (theme.isBW) {
     ctx.save();
     ctx.fillStyle = theme.surface;
     ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
-    // Центральна лінія та коло
     ctx.strokeStyle = theme.fg;
     ctx.lineWidth = 3;
     ctx.setLineDash([10, 10]);
     ctx.beginPath(); ctx.moveTo(BORDER, V_HEIGHT / 2); ctx.lineTo(V_WIDTH - BORDER, V_HEIGHT / 2); ctx.stroke();
     ctx.setLineDash([]);
     ctx.beginPath(); ctx.arc(V_WIDTH / 2, V_HEIGHT / 2, 105, 0, Math.PI * 2); ctx.stroke();
-    // Дуги воріт
-    ctx.lineWidth = 3;
     ctx.beginPath(); ctx.arc(V_WIDTH / 2, BORDER, 170, 0, Math.PI); ctx.stroke();
     ctx.beginPath(); ctx.arc(V_WIDTH / 2, V_HEIGHT - BORDER, 170, Math.PI, 0); ctx.stroke();
-    // Борти з відкритими воротами
     ctx.lineWidth = 6;
-    ctx.strokeStyle = theme.fg;
     ctx.beginPath();
     ctx.moveTo(gL, BORDER); ctx.lineTo(BORDER, BORDER); ctx.lineTo(BORDER, V_HEIGHT - BORDER); ctx.lineTo(gL, V_HEIGHT - BORDER);
     ctx.moveTo(gR, BORDER); ctx.lineTo(V_WIDTH - BORDER, BORDER); ctx.lineTo(V_WIDTH - BORDER, V_HEIGHT - BORDER); ctx.lineTo(gR, V_HEIGHT - BORDER);
     ctx.stroke();
-    // Пунктирні лінії воріт
     ctx.lineWidth = 3;
     ctx.setLineDash([8, 8]);
     ctx.beginPath();
@@ -2430,35 +3455,55 @@ function drawHockeyField() {
     ctx.moveTo(gL, V_HEIGHT - BORDER); ctx.lineTo(gR, V_HEIGHT - BORDER);
     ctx.stroke();
     ctx.setLineDash([]);
-    // Стійки воріт
     ctx.fillStyle = theme.fg;
     [[gL, BORDER], [gR, BORDER], [gL, V_HEIGHT - BORDER], [gR, V_HEIGHT - BORDER]].forEach(([px, py]) => {
       ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2); ctx.fill();
     });
-    // Шлейф шайби
-    for (let i = 0; i < puckTrail.length; i++) {
-      const pt = puckTrail[i];
-      ctx.beginPath();
-      ctx.arc(pt.x, pt.y, puck.radius * (1 - i * 0.1), 0, Math.PI * 2);
-      ctx.strokeStyle = theme.fg;
-      ctx.globalAlpha = Math.max(0.1, (1 - i / puckTrail.length) * 0.35);
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-    ctx.globalAlpha = 1;
-    // Шайба (контрастна з внутрішнім кільцем)
-    ctx.beginPath(); ctx.arc(puck.x, puck.y, puck.radius, 0, Math.PI * 2);
-    ctx.fillStyle = theme.fg; ctx.fill();
-    ctx.beginPath(); ctx.arc(puck.x, puck.y, puck.radius * 0.55, 0, Math.PI * 2);
-    ctx.strokeStyle = theme.surface; ctx.lineWidth = 3; ctx.stroke();
-    // Биток Г1 (суцільний з внутрішнім кільцем)
+    drawHockeyOrbs(theme);
+    // Шайби
+    pucks.forEach((p, idx) => {
+      for (let i = 0; i < p.trail.length; i++) {
+        const pt = p.trail[i];
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, p.radius * (1 - i * 0.1), 0, Math.PI * 2);
+        ctx.strokeStyle = theme.fg;
+        ctx.globalAlpha = Math.max(0.1, (1 - i / p.trail.length) * 0.35);
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      if (idx === 0 && isFirePuck) {
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.radius + 9, 0, Math.PI * 2);
+        ctx.setLineDash([6, 4]); ctx.lineWidth = 3; ctx.strokeStyle = theme.fg; ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      if (idx === 0 && hockeyIdleFrames >= 300) {
+        const pct = Math.min(1, (hockeyIdleFrames - 300) / 180);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius + 14, -Math.PI / 2, -Math.PI / 2 + pct * Math.PI * 2);
+        ctx.strokeStyle = theme.fg; ctx.lineWidth = 3.5; ctx.stroke();
+      }
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = p.isBonus ? theme.surface : theme.fg; ctx.fill();
+      if (p.isBonus) { ctx.lineWidth = 4; ctx.strokeStyle = theme.fg; ctx.stroke(); }
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.radius * 0.55, 0, Math.PI * 2);
+      ctx.strokeStyle = p.isBonus ? theme.fg : theme.surface; ctx.lineWidth = 3; ctx.stroke();
+    });
+    // Попередження анти-кемпу
+    [mallet1, mallet2].forEach(m => {
+      if (m.campFrames >= 200 && Math.floor(m.campFrames / 8) % 2 === 0) {
+        ctx.beginPath(); ctx.arc(m.x, m.y, m.radius + 10, 0, Math.PI * 2);
+        ctx.strokeStyle = theme.fg; ctx.lineWidth = 3; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
+      }
+    });
+    // Биток Г1 (суцільний)
     ctx.beginPath(); ctx.arc(mallet1.x, mallet1.y, mallet1.radius, 0, Math.PI * 2);
     ctx.fillStyle = theme.fg; ctx.fill();
     ctx.beginPath(); ctx.arc(mallet1.x, mallet1.y, mallet1.radius * 0.58, 0, Math.PI * 2);
     ctx.strokeStyle = theme.surface; ctx.lineWidth = 4; ctx.stroke();
     ctx.beginPath(); ctx.arc(mallet1.x, mallet1.y, mallet1.radius * 0.25, 0, Math.PI * 2);
     ctx.fillStyle = theme.surface; ctx.fill();
-    // Биток Г2 (порожнистий контурний щоб чітко відрізнявся!)
+    // Биток Г2 (порожнистий контурний)
     ctx.beginPath(); ctx.arc(mallet2.x, mallet2.y, mallet2.radius, 0, Math.PI * 2);
     ctx.fillStyle = theme.surface; ctx.fill();
     ctx.lineWidth = 6; ctx.strokeStyle = theme.fg; ctx.stroke();
@@ -2466,10 +3511,11 @@ function drawHockeyField() {
     ctx.lineWidth = 3; ctx.stroke();
     ctx.beginPath(); ctx.arc(mallet2.x, mallet2.y, mallet2.radius * 0.22, 0, Math.PI * 2);
     ctx.fillStyle = theme.fg; ctx.fill();
+    if (isFirePuck) drawCanvasBadge(BORDER + 14, V_HEIGHT / 2, '×2 ВОГОНЬ!', 'left');
     ctx.restore();
     return;
   }
-  // ПОВНОЦІННИЙ РЕАЛІСТИЧНИЙ ХОКЕЙ
+  // БАРВИСТИЙ ХОКЕЙ
   ctx.save();
   ctx.fillStyle = '#0b1329';
   ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
@@ -2492,17 +3538,41 @@ function drawHockeyField() {
   ctx.beginPath(); ctx.moveTo(gL, BORDER); ctx.lineTo(gR, BORDER); ctx.stroke();
   ctx.strokeStyle = 'rgba(0, 240, 255, 0.9)';
   ctx.beginPath(); ctx.moveTo(gL, V_HEIGHT - BORDER); ctx.lineTo(gR, V_HEIGHT - BORDER); ctx.stroke();
-  for (let i = 0; i < puckTrail.length; i++) {
-    const pt = puckTrail[i];
-    ctx.beginPath(); ctx.arc(pt.x, pt.y, puck.radius * (1 - i * 0.08), 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(250, 204, 21, ${pt.alpha * 0.35})`; ctx.fill();
-  }
-  const grad = ctx.createRadialGradient(puck.x - 4, puck.y - 5, 2, puck.x, puck.y, puck.radius);
-  grad.addColorStop(0, '#fffbeb'); grad.addColorStop(0.3, '#facc15'); grad.addColorStop(0.85, '#ca8a04'); grad.addColorStop(1, '#713f12');
-  ctx.beginPath(); ctx.arc(puck.x, puck.y, puck.radius, 0, Math.PI * 2); ctx.fillStyle = grad; ctx.fill();
-  ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)'; ctx.lineWidth = 2.5;
-  ctx.beginPath(); ctx.arc(puck.x, puck.y, puck.radius * 0.65, 0, Math.PI * 2); ctx.stroke();
+  drawHockeyOrbs(theme);
+  pucks.forEach((p, idx) => {
+    for (let i = 0; i < p.trail.length; i++) {
+      const pt = p.trail[i];
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, p.radius * (1 - i * 0.08), 0, Math.PI * 2);
+      ctx.fillStyle = idx === 0 && isFirePuck ? `rgba(249, 115, 22, ${pt.alpha * 0.5})` : `rgba(250, 204, 21, ${pt.alpha * 0.35})`;
+      ctx.fill();
+    }
+    if (idx === 0 && isFirePuck) {
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.radius + 9, 0, Math.PI * 2);
+      ctx.strokeStyle = '#f97316'; ctx.lineWidth = 4; ctx.stroke();
+    }
+    if (idx === 0 && hockeyIdleFrames >= 300) {
+      const pct = Math.min(1, (hockeyIdleFrames - 300) / 180);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius + 14, -Math.PI / 2, -Math.PI / 2 + pct * Math.PI * 2);
+      ctx.strokeStyle = '#facc15'; ctx.lineWidth = 4; ctx.stroke();
+    }
+    const grad = ctx.createRadialGradient(p.x - 4, p.y - 5, 2, p.x, p.y, p.radius);
+    if (p.isBonus) {
+      grad.addColorStop(0, '#fef08a'); grad.addColorStop(0.6, '#eab308'); grad.addColorStop(1, '#854d0e');
+    } else if (isFirePuck) {
+      grad.addColorStop(0, '#fff7ed'); grad.addColorStop(0.35, '#fb923c'); grad.addColorStop(1, '#c2410c');
+    } else {
+      grad.addColorStop(0, '#fffbeb'); grad.addColorStop(0.3, '#facc15'); grad.addColorStop(0.85, '#ca8a04'); grad.addColorStop(1, '#713f12');
+    }
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fillStyle = grad; ctx.fill();
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.radius * 0.65, 0, Math.PI * 2); ctx.stroke();
+  });
   const drawMallet = (m, col) => {
+    if (m.campFrames >= 200 && Math.floor(m.campFrames / 8) % 2 === 0) {
+      ctx.beginPath(); ctx.arc(m.x, m.y, m.radius + 10, 0, Math.PI * 2);
+      ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 4; ctx.stroke();
+    }
     ctx.beginPath(); ctx.arc(m.x, m.y, m.radius, 0, Math.PI * 2); ctx.fillStyle = '#0f172a'; ctx.fill();
     ctx.lineWidth = 5; ctx.strokeStyle = col; ctx.stroke();
     const mg = ctx.createRadialGradient(m.x - 6, m.y - 8, 4, m.x, m.y, m.radius * 0.65);
@@ -2511,6 +3581,8 @@ function drawHockeyField() {
   };
   drawMallet(mallet1, '#00f0ff');
   drawMallet(mallet2, '#ff0055');
+  if (isFirePuck) drawCanvasBadge(BORDER + 14, V_HEIGHT / 2, '🔥 ВОГНЯНА ×2', 'left');
+  else if (rallyHits >= 2) drawCanvasBadge(BORDER + 14, V_HEIGHT / 2, `СЕРІЯ ${rallyHits}/6`, 'left');
   ctx.restore();
 }
 function drawInvadersField() {
@@ -2519,9 +3591,7 @@ function drawInvadersField() {
   ctx.fillStyle = theme.surface;
   ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
   stars.forEach(st => {
-    ctx.fillStyle = theme.isBW
-      ? theme.fg
-      : 'rgba(255, 255, 255, 0.35)';
+    ctx.fillStyle = theme.isBW ? theme.fg : 'rgba(255, 255, 255, 0.35)';
     if (theme.isBW) ctx.globalAlpha = 0.25;
     ctx.fillRect(st.x, st.y, st.radius, st.radius);
   });
@@ -2538,23 +3608,85 @@ function drawInvadersField() {
       if (b.hp > 0) ctx.fillRect(b.x, b.y, b.w - 1.5, b.h - 1.5);
     });
   });
-  // Прибульці
+  // PvP перешкоди (астероїди, міни, відбивачі)
+  spaceHazards.forEach(hz => {
+    if (hz.type === 'asteroid' && hz.alive) {
+      ctx.fillStyle = theme.isBW ? theme.surface : '#64748b';
+      ctx.strokeStyle = theme.isBW ? theme.fg : '#cbd5e1';
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(hz.x, hz.y, hz.radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = theme.isBW ? theme.fg : '#ffffff';
+      ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(hz.hp, hz.x, hz.y + 1);
+    } else if (hz.type === 'mine' && hz.alive) {
+      ctx.fillStyle = theme.isBW ? theme.fg : '#ef4444';
+      ctx.beginPath(); ctx.arc(hz.x, hz.y, hz.radius - 4, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = theme.isBW ? theme.fg : '#fca5a5';
+      ctx.lineWidth = 3;
+      for (let k = 0; k < 4; k++) {
+        const a = (k * Math.PI) / 4;
+        ctx.beginPath();
+        ctx.moveTo(hz.x + Math.cos(a) * hz.radius, hz.y + Math.sin(a) * hz.radius);
+        ctx.lineTo(hz.x - Math.cos(a) * hz.radius, hz.y - Math.sin(a) * hz.radius);
+        ctx.stroke();
+      }
+    } else if (hz.type === 'deflector') {
+      ctx.fillStyle = theme.isBW ? theme.fg : '#38bdf8';
+      ctx.fillRect(hz.x - hz.w / 2, hz.y - hz.h / 2, hz.w, hz.h);
+      ctx.strokeStyle = theme.surface; ctx.lineWidth = 2;
+      ctx.strokeRect(hz.x - hz.w / 2 + 2, hz.y - hz.h / 2 + 2, hz.w - 4, hz.h - 4);
+    }
+  });
+  // Прибульці (Кооп)
   if (invadersShape === 'coop') {
     aliens.forEach(a => {
       if (!a.alive) return;
-      ctx.fillStyle = theme.isBW ? theme.fg : a.color;
       const x = a.x, y = a.y;
+      if (a.kind === 'boss') {
+        ctx.fillStyle = theme.isBW ? theme.fg : '#ef4444';
+        ctx.fillRect(x - 44, y - 14, 88, 24);
+        ctx.fillRect(x - 24, y - 22, 48, 10);
+        ctx.fillStyle = theme.surface;
+        ctx.fillRect(x - 30, y - 4, 10, 8);
+        ctx.fillRect(x - 5, y - 4, 10, 8);
+        ctx.fillRect(x + 20, y - 4, 10, 8);
+        // Смуга здоров'я боса
+        ctx.fillStyle = theme.isBW ? theme.surface : '#1e293b';
+        ctx.fillRect(x - 42, y - 32, 84, 6);
+        ctx.fillStyle = theme.isBW ? theme.fg : '#facc15';
+        ctx.fillRect(x - 42, y - 32, 84 * (a.hp / a.maxHp), 6);
+        if (theme.isBW) { ctx.strokeStyle = theme.fg; ctx.lineWidth = 1.5; ctx.strokeRect(x - 42, y - 32, 84, 6); }
+        return;
+      }
+      ctx.fillStyle = theme.isBW ? theme.fg : a.color;
       ctx.fillRect(x - 14, y - 8, 28, 14);
       ctx.fillRect(x - 18, y - 4, 36, 8);
       ctx.fillRect(x - 10, y - 12, 6, 4);
       ctx.fillRect(x + 4, y - 12, 6, 4);
       ctx.fillRect(x - 14, y + 6, 6, 6);
       ctx.fillRect(x + 8, y + 6, 6, 6);
+      if (a.hp > 1 || a.kind === 'commander') {
+        ctx.strokeStyle = theme.isBW ? theme.fg : '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x - 20, y - 14, 40, 28);
+      }
       ctx.fillStyle = theme.surface;
       ctx.fillRect(x - 8, y - 4, 4, 4);
       ctx.fillRect(x + 4, y - 4, 4, 4);
     });
   }
+  // Бонусні капсули у польоті
+  spacePowerups.forEach(pu => {
+    ctx.save();
+    ctx.fillStyle = theme.isBW ? theme.surface : '#0f172a';
+    ctx.strokeStyle = theme.isBW ? theme.fg : '#facc15';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(pu.x, pu.y, 17, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = theme.isBW ? theme.fg : '#ffffff';
+    ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(pu.kind === 'rapid' ? '⚡' : (pu.kind === 'triple' ? '🔱' : '🛡️'), pu.x, pu.y + 1);
+    ctx.restore();
+  });
   // Постріли прибульців
   alienShots.forEach(as => {
     ctx.fillStyle = theme.isBW ? theme.fg : '#22c55e';
@@ -2579,7 +3711,7 @@ function drawInvadersField() {
       ctx.fillRect(l.x - 2.5, l.y - 12, 5, 24);
     }
   });
-  // НЛО
+  // НЛО / Супутник
   if (ufo.active) {
     ctx.fillStyle = theme.accent;
     ctx.beginPath(); ctx.ellipse(ufo.x, ufo.y, 28, 12, 0, 0, Math.PI * 2); ctx.fill();
@@ -2594,9 +3726,9 @@ function drawInvadersField() {
     ctx.fillRect(ship1.x - 28, ship1.y, 56, 14);
     ctx.fillRect(ship1.x - 14, ship1.y - 8, 28, 8);
     ctx.fillRect(ship1.x - 4, ship1.y - 18, 8, 10);
-    if (now < ship1.rapidUntil) {
-      ctx.strokeStyle = theme.accent; ctx.lineWidth = 2;
-      ctx.strokeRect(ship1.x - 33, ship1.y - 22, 66, 40);
+    if (now < ship1.rapidUntil || now < ship1.tripleUntil) {
+      ctx.strokeStyle = theme.accent; ctx.lineWidth = 2.5;
+      ctx.strokeRect(ship1.x - 34, ship1.y - 22, 68, 42);
     }
   }
   // Корабель Г2
@@ -2617,11 +3749,12 @@ function drawInvadersField() {
       ctx.fillRect(ship2.x - 14, ship2.y, 28, 8);
       ctx.fillRect(ship2.x - 4, ship2.y + 8, 8, 10);
     }
-    if (now < ship2.rapidUntil) {
-      ctx.strokeStyle = theme.accent; ctx.lineWidth = 2;
-      ctx.strokeRect(ship2.x - 33, ship2.y - 18, 66, 40);
+    if (now < ship2.rapidUntil || now < ship2.tripleUntil) {
+      ctx.strokeStyle = theme.accent; ctx.lineWidth = 2.5;
+      ctx.strokeRect(ship2.x - 34, ship2.y - 18, 68, 42);
     }
   }
+  drawCanvasBadge(BORDER + 14, V_HEIGHT / 2, invadersShape === 'coop' ? (alienSwarm.bossMode ? `⚠️ БОС • ХВ.${spaceLevel}` : `ХВИЛЯ ${spaceLevel}`) : `АРЕНА ${spaceLevel}`, 'left');
 }
 function drawSnakeField() {
   const theme = getThemeColors();
@@ -2632,7 +3765,23 @@ function drawSnakeField() {
   if (snakeWallMode === 'looped') ctx.setLineDash([10, 10]);
   ctx.strokeRect(BORDER, BORDER, V_WIDTH - BORDER * 2, V_HEIGHT - BORDER * 2);
   ctx.setLineDash([]);
-  // Їжа
+  // Перешкоди процедурної арени
+  snakeObstacles.forEach(ob => {
+    if (theme.isBW) {
+      ctx.fillStyle = theme.fg;
+      ctx.fillRect(ob.x + 1, ob.y + 1, ob.w - 2, ob.h - 2);
+      ctx.strokeStyle = theme.surface;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(ob.x + 5, ob.y + 5, ob.w - 10, ob.h - 10);
+    } else {
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(ob.x + 1, ob.y + 1, ob.w - 2, ob.h - 2);
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(ob.x + 2, ob.y + 2, ob.w - 4, ob.h - 4);
+    }
+  });
+  // Звичайна їжа
   snakeFoods.forEach(f => {
     ctx.fillStyle = theme.accent;
     if (snakeStyleMode === 'pixel') {
@@ -2651,8 +3800,51 @@ function drawSnakeField() {
       }
     }
   });
+  // Золотий плід
+  if (goldFood) {
+    const gx = snakeStyleMode === 'pixel' ? ARENA_X + goldFood.gx * GRID_SIZE + GRID_SIZE / 2 : goldFood.x;
+    const gy = snakeStyleMode === 'pixel' ? ARENA_Y + goldFood.gy * GRID_SIZE + GRID_SIZE / 2 : goldFood.y;
+    const pct = goldFood.life / goldFood.maxLife;
+    ctx.save();
+    ctx.strokeStyle = theme.isBW ? theme.fg : '#facc15';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(gx, gy, 19, -Math.PI / 2, -Math.PI / 2 + pct * Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = theme.isBW ? theme.fg : '#facc15';
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const a1 = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+      const a2 = a1 + Math.PI / 5;
+      ctx.lineTo(gx + Math.cos(a1) * 14, gy + Math.sin(a1) * 14);
+      ctx.lineTo(gx + Math.cos(a2) * 6, gy + Math.sin(a2) * 6);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+  const drawHungerRing = (hx, hy, snakeObj, col, isP2) => {
+    const pct = Math.max(0, snakeObj.hunger / HUNGER_MAX_FRAMES);
+    const low = pct < 0.28;
+    if (low && Math.floor(snakeObj.hunger / 6) % 2 === 1) return;
+    ctx.save();
+    ctx.strokeStyle = low && !theme.isBW ? '#ef4444' : col;
+    ctx.lineWidth = low ? 4 : 2.5;
+    ctx.beginPath();
+    ctx.arc(hx, hy, 22, -Math.PI / 2, -Math.PI / 2 + pct * Math.PI * 2);
+    ctx.stroke();
+    if (low) {
+      ctx.translate(hx, isP2 ? hy + 36 : hy - 36);
+      if (isP2) ctx.rotate(Math.PI);
+      ctx.fillStyle = theme.isBW ? theme.fg : '#ef4444';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${(snakeObj.hunger / 60).toFixed(1)}с`, 0, 0);
+    }
+    ctx.restore();
+  };
   if (snakeStyleMode === 'pixel') {
-    const drawP = (s, col, isOutline) => {
+    const drawP = (s, col, isOutline, isP2) => {
       s.body.forEach((seg, idx) => {
         const sx = ARENA_X + seg.x * GRID_SIZE + 2;
         const sy = ARENA_Y + seg.y * GRID_SIZE + 2;
@@ -2677,11 +3869,13 @@ function drawSnakeField() {
           }
         }
       });
+      const h = s.body[0];
+      drawHungerRing(ARENA_X + h.x * GRID_SIZE + GRID_SIZE / 2, ARENA_Y + h.y * GRID_SIZE + GRID_SIZE / 2, s, col, isP2);
     };
-    drawP(snake1, theme.p1, false);
-    drawP(snake2, theme.p2, theme.p2Outline);
+    drawP(snake1, theme.p1, false, false);
+    drawP(snake2, theme.p2, theme.p2Outline, true);
   } else {
-    const drawF = (s, col, isOutline) => {
+    const drawF = (s, col, isOutline, isP2) => {
       if (s.body.length < 2) return;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
@@ -2718,17 +3912,16 @@ function drawSnakeField() {
         ctx.fillStyle = theme.text;
         ctx.beginPath(); ctx.arc(s.body[0].x, s.body[0].y, 11, 0, Math.PI * 2); ctx.fill();
       }
-      // Напрямок очей голови
       const head = s.body[0];
       const ex = Math.cos(s.angle) * 5;
       const ey = Math.sin(s.angle) * 5;
       ctx.fillStyle = isOutline ? col : theme.surface;
       ctx.beginPath(); ctx.arc(head.x + ex - ey * 0.6, head.y + ey + ex * 0.6, 2.5, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(head.x + ex + ey * 0.6, head.y + ey - ex * 0.6, 2.5, 0, Math.PI * 2); ctx.fill();
+      drawHungerRing(head.x, head.y, s, col, isP2);
     };
-    drawF(snake1, theme.p1, false);
-    drawF(snake2, theme.p2, theme.p2Outline);
-    // Візуальний джойстик при натисканні
+    drawF(snake1, theme.p1, false, false);
+    drawF(snake2, theme.p2, theme.p2Outline, true);
     [touchInput.p1, touchInput.p2].forEach(inp => {
       if (!inp.active) return;
       ctx.save();
@@ -2739,19 +3932,29 @@ function drawSnakeField() {
       ctx.restore();
     });
   }
+  drawCanvasBadge(BORDER + 14, V_HEIGHT / 2, `АРЕНА ${snakeLevel} • 🍎${snakeRoundFood}/10`, 'left');
 }
 function drawMarioViewport(camX, viewPlayerNum) {
   const theme = getThemeColors();
   ctx.save();
   ctx.translate(-camX, 0);
-  // Небо (зміна атмосфери залежно від рівня у барвистому режимі)
-  let skyCol = theme.sky;
-  if (!theme.isBW) {
-    if (marioWorld.level % 3 === 2) skyCol = '#312e81';
-    else if (marioWorld.level % 3 === 0) skyCol = '#0f172a';
-  }
-  ctx.fillStyle = skyCol;
+  // Палітра 4 процедурних біомів
+  const biomeColors = [
+    { sky: '#5c94fc', grass: '#00a800', dirt: '#c84c0c' }, // 0: Зелена Долина
+    { sky: '#312e81', grass: '#0d9488', dirt: '#334155' }, // 1: Сутінки
+    { sky: '#0f172a', grass: '#be123c', dirt: '#1e293b' }, // 2: Нічний Замок
+    { sky: '#0284c7', grass: '#eab308', dirt: '#7c2d12' }  // 3: Золоті Хмари
+  ];
+  const bPal = biomeColors[marioWorld.biome];
+  ctx.fillStyle = theme.isBW ? theme.sky : bPal.sky;
   ctx.fillRect(camX, 0, V_WIDTH, 680);
+  if (!theme.isBW && (marioWorld.biome === 1 || marioWorld.biome === 2)) {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    for (let sx = Math.floor(camX / 90) * 90; sx < camX + V_WIDTH; sx += 90) {
+      ctx.fillRect(sx + 20, 45 + (sx % 70), 3, 3);
+      ctx.fillRect(sx + 60, 120 + (sx % 50), 2, 2);
+    }
+  }
   // Хмари та кущі
   marioWorld.scenery.forEach(sc => {
     if (sc.x + 120 < camX || sc.x > camX + V_WIDTH) return;
@@ -2764,7 +3967,8 @@ function drawMarioViewport(camX, viewPlayerNum) {
         ctx.fillStyle = theme.surface; ctx.fill();
         ctx.strokeStyle = theme.fg; ctx.lineWidth = 2; ctx.stroke();
       } else {
-        ctx.fillStyle = '#ffffff'; ctx.fill();
+        ctx.fillStyle = marioWorld.biome === 2 ? 'rgba(255,255,255,0.22)' : '#ffffff';
+        ctx.fill();
       }
     } else if (sc.type === 'bush') {
       ctx.beginPath();
@@ -2775,11 +3979,11 @@ function drawMarioViewport(camX, viewPlayerNum) {
         ctx.fillStyle = theme.surface; ctx.fill();
         ctx.strokeStyle = theme.fg; ctx.lineWidth = 2; ctx.stroke();
       } else {
-        ctx.fillStyle = '#00a800'; ctx.fill();
+        ctx.fillStyle = bPal.grass; ctx.fill();
       }
     }
   });
-  // Рослини-піраньї малюються ПЕРЕД трубами щоб ховатися всередині!
+  // Рослини-піраньї
   marioWorld.enemies.forEach(e => {
     if (e.type !== 'piranha' || !e.alive || e.offset >= -2) return;
     if (e.x < camX - 40 || e.x > camX + V_WIDTH + 40) return;
@@ -2802,9 +4006,9 @@ function drawMarioViewport(camX, viewPlayerNum) {
         ctx.fillStyle = theme.fg; ctx.fillRect(b.x, b.y, b.w, 12);
         ctx.strokeStyle = theme.fg; ctx.lineWidth = 2; ctx.strokeRect(b.x, b.y, b.w, b.h);
       } else {
-        ctx.fillStyle = '#00a800'; ctx.fillRect(b.x, b.y, b.w, 16);
-        ctx.fillStyle = '#c84c0c'; ctx.fillRect(b.x, b.y + 16, b.w, b.h - 16);
-        ctx.strokeStyle = '#000000'; ctx.lineWidth = 1.5;
+        ctx.fillStyle = bPal.grass; ctx.fillRect(b.x, b.y, b.w, 16);
+        ctx.fillStyle = bPal.dirt; ctx.fillRect(b.x, b.y + 16, b.w, b.h - 16);
+        ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.lineWidth = 1.5;
         for (let bx = b.x; bx < b.x + b.w; bx += 32) ctx.strokeRect(bx, b.y + 16, 32, 32);
       }
     } else if (b.type === 'qblock') {
@@ -2832,7 +4036,7 @@ function drawMarioViewport(camX, viewPlayerNum) {
       }
     } else if (b.type === 'brick') {
       const by = b.y - bump;
-      ctx.fillStyle = theme.isBW ? theme.surface : '#c84c0c';
+      ctx.fillStyle = theme.isBW ? theme.surface : bPal.dirt;
       ctx.fillRect(b.x, by, b.w, b.h);
       ctx.strokeStyle = theme.isBW ? theme.fg : '#000000';
       ctx.lineWidth = 2;
@@ -2864,7 +4068,33 @@ function drawMarioViewport(camX, viewPlayerNum) {
       ctx.strokeRect(b.x, b.y, b.w, b.h);
     }
   });
-  // Флагшток та замок фінішу
+  // Рухомі платформи
+  marioWorld.movingPlatforms.forEach(plat => {
+    if (plat.x + plat.w < camX || plat.x > camX + V_WIDTH) return;
+    ctx.fillStyle = theme.isBW ? theme.surface : '#facc15';
+    ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
+    ctx.strokeStyle = theme.isBW ? theme.fg : '#78350f';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(plat.x, plat.y, plat.w, plat.h);
+    ctx.fillStyle = theme.isBW ? theme.fg : '#78350f';
+    ctx.fillRect(plat.x + 10, plat.y + 6, plat.w - 20, 4);
+  });
+  // Пружини
+  marioWorld.springs.forEach(spr => {
+    if (spr.x + spr.w < camX || spr.x > camX + V_WIDTH) return;
+    const lift = spr.bounceAnim > 0 ? 7 : 0;
+    ctx.fillStyle = theme.isBW ? theme.fg : '#ef4444';
+    ctx.fillRect(spr.x, spr.y - lift, spr.w, 8);
+    ctx.strokeStyle = theme.isBW ? theme.fg : '#facc15';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(spr.x + 6, spr.y + 8 - lift);
+    ctx.lineTo(spr.x + spr.w - 6, spr.y + spr.h);
+    ctx.moveTo(spr.x + spr.w - 6, spr.y + 8 - lift);
+    ctx.lineTo(spr.x + 6, spr.y + spr.h);
+    ctx.stroke();
+  });
+  // Флагшток і замок
   if (marioWorld.flagX + 260 >= camX && marioWorld.flagX - 60 <= camX + V_WIDTH) {
     ctx.fillStyle = theme.isBW ? theme.fg : '#00a800';
     ctx.fillRect(marioWorld.flagX, 185, 8, 380);
@@ -2874,7 +4104,6 @@ function drawMarioViewport(camX, viewPlayerNum) {
     ctx.beginPath();
     ctx.moveTo(marioWorld.flagX - 42, 208); ctx.lineTo(marioWorld.flagX, 228); ctx.lineTo(marioWorld.flagX, 190);
     ctx.closePath(); ctx.fill();
-    // Замок за флагштоком
     const cx = marioWorld.flagX + 95;
     ctx.fillStyle = theme.isBW ? theme.surface : '#b45309';
     ctx.fillRect(cx, 445, 110, 120);
@@ -2888,7 +4117,7 @@ function drawMarioViewport(camX, viewPlayerNum) {
     ctx.beginPath(); ctx.arc(cx + 55, 530, 18, Math.PI, 0); ctx.fill();
     ctx.fillRect(cx + 37, 530, 36, 35);
   }
-  // Монети та вилітаючі монети з ?-блоків
+  // Монети
   marioWorld.coins.forEach(c => {
     const got = viewPlayerNum === 1 ? c.gotP1 : c.gotP2;
     if (!got && c.x >= camX - 20 && c.x <= camX + V_WIDTH + 20) {
@@ -2903,7 +4132,7 @@ function drawMarioViewport(camX, viewPlayerNum) {
     ctx.fillStyle = theme.isBW ? theme.fg : theme.accent;
     ctx.beginPath(); ctx.ellipse(pc.x, pc.y, 7, 11, 0, 0, Math.PI * 2); ctx.fill();
   });
-  // Бонуси (Гриб та Зірочка)
+  // Бонуси
   marioWorld.powerups.forEach(pu => {
     if (!pu.active || pu.owner !== viewPlayerNum) return;
     if (pu.type === 'mushroom') {
@@ -2930,7 +4159,7 @@ function drawMarioViewport(camX, viewPlayerNum) {
       ctx.closePath(); ctx.fill();
     }
   });
-  // Вороги (Гумби та Черепахи Купа)
+  // Вороги (Гумби, Купи, Паратрупи)
   marioWorld.enemies.forEach(e => {
     if (e.type === 'piranha' || e.x < camX - 40 || e.x > camX + V_WIDTH + 40) return;
     if (e.type === 'goomba') {
@@ -2947,7 +4176,7 @@ function drawMarioViewport(camX, viewPlayerNum) {
       ctx.fillRect(e.x - 8, e.y - 6, 4, 6); ctx.fillRect(e.x + 4, e.y - 6, 4, 6);
       ctx.fillStyle = theme.isBW ? theme.fg : '#000000';
       ctx.fillRect(e.x - 12, e.y + 8, 8, 6); ctx.fillRect(e.x + 4, e.y + 8, 8, 6);
-    } else if (e.type === 'koopa') {
+    } else if (e.type === 'koopa' || e.type === 'parakoopa') {
       if (!e.alive) return;
       if (e.inShell) {
         ctx.fillStyle = theme.isBW ? theme.fg : '#16a34a';
@@ -2955,8 +4184,14 @@ function drawMarioViewport(camX, viewPlayerNum) {
         ctx.strokeStyle = theme.surface; ctx.lineWidth = 2.5;
         ctx.beginPath(); ctx.arc(e.x, e.y + 4, 8, 0, Math.PI * 2); ctx.stroke();
       } else {
-        ctx.fillStyle = theme.isBW ? theme.fg : '#16a34a';
+        ctx.fillStyle = theme.isBW ? theme.fg : (e.winged ? '#dc2626' : '#16a34a');
         ctx.beginPath(); ctx.arc(e.x, e.y - 3, 14, 0, Math.PI * 2); ctx.fill();
+        if (e.winged) {
+          ctx.fillStyle = theme.isBW ? theme.surface : '#ffffff';
+          ctx.strokeStyle = theme.fg; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.ellipse(e.x + 12, e.y - 12, 9, 5, -0.4, 0, Math.PI * 2); ctx.fill();
+          if (theme.isBW) ctx.stroke();
+        }
         ctx.fillStyle = theme.isBW ? theme.surface : '#facc15';
         ctx.fillRect(e.x - 12, e.y - 17, 13, 11);
         if (theme.isBW) {
@@ -2969,7 +4204,7 @@ function drawMarioViewport(camX, viewPlayerNum) {
       }
     }
   });
-  // Частинки у світі Маріо
+  // Частинки Маріо
   for (let i = 0; i < particles.length; i++) {
     const pt = particles[i];
     if (pt.scope !== 'mario') continue;
@@ -2977,7 +4212,7 @@ function drawMarioViewport(camX, viewPlayerNum) {
     ctx.fillStyle = pt.color; ctx.globalAlpha = Math.max(pt.alpha, 0); ctx.fill();
   }
   ctx.globalAlpha = 1;
-  // Спрайти Г1 та Г2
+  // Спрайти гравців
   const drawMarioSprite = (p, pNum, capColor, overallColor, isOutline) => {
     if (p.respawnTimer > 0) return;
     if (p.invuln > 0 && Math.floor(p.invuln / 4) % 2 === 0) return;
@@ -3022,7 +4257,6 @@ function drawMarioViewport(camX, viewPlayerNum) {
       ctx.fillRect(3, 8, 8, 10 - legStep);
     }
     ctx.restore();
-    // Мітка номера гравця над головою
     ctx.fillStyle = theme.isBW ? theme.fg : (pNum === 1 ? '#00f0ff' : '#22c55e');
     ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'center';
@@ -3036,7 +4270,6 @@ function drawMarioViewport(camX, viewPlayerNum) {
     drawMarioSprite(p1Runner, 1, '#ef4444', '#1d4ed8', false);
     drawMarioSprite(p2Runner, 2, '#22c55e', '#7e22ce', false);
   }
-  // Плаваючий текст у світі Маріо
   for (let i = 0; i < floatingTexts.length; i++) {
     const ft = floatingTexts[i];
     if (ft.scope !== viewPlayerNum) continue;
@@ -3049,7 +4282,7 @@ function drawMarioViewport(camX, viewPlayerNum) {
     ctx.restore();
   }
   ctx.restore();
-  // Віртуальні сенсорні кнопки керування (у координатах поточного в'юпорту!)
+  // Віртуальні сенсорні кнопки
   const ctrl = viewPlayerNum === 1 ? marioControls.p1 : marioControls.p2;
   const drawTouchBtn = (btn, label, active) => {
     ctx.save();
@@ -3058,7 +4291,8 @@ function drawMarioViewport(camX, viewPlayerNum) {
     ctx.strokeStyle = theme.isBW ? theme.fg : (viewPlayerNum === 1 ? '#00f0ff' : '#ff0055');
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.roundRect ? ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 16) : ctx.rect(btn.x, btn.y, btn.w, btn.h);
+    if (ctx.roundRect) ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 16);
+    else ctx.rect(btn.x, btn.y, btn.w, btn.h);
     ctx.fill();
     ctx.stroke();
     ctx.fillStyle = theme.isBW ? (active ? theme.surface : theme.fg) : '#ffffff';
@@ -3077,7 +4311,7 @@ function drawMarioSplitScreen() {
   const camX1 = Math.max(0, Math.min(maxCam, p1Runner.x - 240));
   const camX2 = Math.max(0, Math.min(maxCam, p2Runner.x - 240));
   const theme = getThemeColors();
-  // Верхній екран (Гравець 2, перевернутий на 180°)
+  // Верхній екран (Г2, 180°)
   ctx.save();
   ctx.beginPath();
   ctx.rect(0, 0, V_WIDTH, 680);
@@ -3087,7 +4321,7 @@ function drawMarioSplitScreen() {
   ctx.translate(-V_WIDTH / 2, -340);
   drawMarioViewport(camX2, 2);
   ctx.restore();
-  // Нижній екран (Гравець 1)
+  // Нижній екран (Г1)
   ctx.save();
   ctx.beginPath();
   ctx.rect(0, 680, V_WIDTH, 680);
@@ -3095,13 +4329,13 @@ function drawMarioSplitScreen() {
   ctx.translate(0, 680);
   drawMarioViewport(camX1, 1);
   ctx.restore();
-  // Центральна смуга прогресу перегонів
+  // Центральна смуга прогресу
   ctx.fillStyle = theme.isBW ? theme.surface : '#070913';
-  ctx.fillRect(0, 672, V_WIDTH, 16);
+  ctx.fillRect(0, 670, V_WIDTH, 20);
   ctx.strokeStyle = theme.isBW ? theme.fg : 'rgba(255,255,255,0.3)';
   ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(0, 672); ctx.lineTo(V_WIDTH, 672); ctx.moveTo(0, 688); ctx.lineTo(V_WIDTH, 688); ctx.stroke();
-  const barL = 55, barR = V_WIDTH - 55, barW = barR - barL;
+  ctx.beginPath(); ctx.moveTo(0, 670); ctx.lineTo(V_WIDTH, 670); ctx.moveTo(0, 690); ctx.lineTo(V_WIDTH, 690); ctx.stroke();
+  const barL = 138, barR = V_WIDTH - 64, barW = barR - barL;
   const p1Prog = Math.max(0, Math.min(1, p1Runner.x / marioWorld.flagX));
   const p2Prog = Math.max(0, Math.min(1, p2Runner.x / marioWorld.flagX));
   ctx.fillStyle = theme.isBW ? theme.fg : '#00f0ff';
@@ -3110,6 +4344,7 @@ function drawMarioSplitScreen() {
   ctx.strokeStyle = theme.isBW ? theme.fg : '#ff0055';
   ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.arc(barL + barW * p2Prog, 680, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  drawCanvasBadge(14, 680, `РІВЕНЬ ${marioWorld.level}`, 'left');
 }
 function drawSharedEffects() {
   for (let i = 0; i < particles.length; i++) {
@@ -3124,10 +4359,12 @@ function drawSharedEffects() {
     if (ft.scope !== 0) continue;
     ctx.save();
     ctx.globalAlpha = Math.max(0, ft.alpha);
+    ctx.translate(ft.x, ft.y);
+    if (ft.rotated) ctx.rotate(Math.PI);
     ctx.font = 'bold 20px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillStyle = ft.color;
-    ctx.fillText(ft.text, ft.x, ft.y);
+    ctx.fillText(ft.text, 0, 0);
     ctx.restore();
   }
 }
@@ -3139,33 +4376,14 @@ function updateVisualEffects() {
   }
   for (let i = floatingTexts.length - 1; i >= 0; i--) {
     const ft = floatingTexts[i];
-    ft.y += ft.vy; ft.alpha -= 0.022;
+    ft.y += ft.vy; ft.alpha -= 0.02;
     if (ft.alpha <= 0) floatingTexts.splice(i, 1);
   }
 }
-// Перехоплюємо createSparks у Маріо щоб частинки автоматично прив'язувались до світу Маріо
-const _origCreateSparks = createSparks;
-createSparks = function(x, y, color, count = 12) {
-  const theme = getThemeColors();
-  const sparkColor = theme.isBW ? theme.fg : (color || '#ffffff');
-  const scope = currentMode === 'MARIO' ? 'mario' : 0;
-  for (let i = 0; i < count; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const speed = 2 + Math.random() * 8;
-    particles.push({
-      x, y,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      radius: 2 + Math.random() * 3.2,
-      alpha: 1,
-      color: sparkColor,
-      decay: 0.03 + Math.random() * 0.04,
-      scope
-    });
-  }
-};
 /**
- * ГОЛОВНИЙ ЦИКЛ З ФІКСОВАНИМ КРОКОМ 60Hz (ОДНАКОВА ШВИДКІСТЬ НА 60Hz, 90Hz І 120Hz!)
+ * ============================================================================
+ * ГОЛОВНИЙ ЦИКЛ З ФІКСОВАНИМ КРОКОМ 60Hz
+ * ============================================================================
  */
 const FIXED_STEP = 1000 / 60;
 let lastFrameTime = 0;
@@ -3197,7 +4415,9 @@ function loop(now) {
 }
 requestAnimationFrame(loop);
 /**
+ * ============================================================================
  * ІНТЕРФЕЙС, МЕНЮ ТА ЕКСПОРТ ОФЛАЙН-ФАЙЛУ
+ * ============================================================================
  */
 const modal = document.getElementById('menu-modal');
 const btnPlayResume = document.getElementById('btn-play-resume');
@@ -3212,10 +4432,10 @@ const modeMario = document.getElementById('mode-mario');
 const invadersOptions = document.getElementById('invaders-options');
 const snakeOptions = document.getElementById('snake-options');
 const MODE_META = {
-  HOCKEY:   { title: 'ПОВІТРЯНИЙ ХОКЕЙ', desc: 'Відбивайте шайбу в своїй половині • Забийте у ворота суперника' },
-  INVADERS: { title: 'КОСМІЧНА БИТВА',  desc: 'Водіть пальцем для руху й вогню • У коопі бережіть напарника!' },
-  SNAKE:    { title: 'ПОДВІЙНА ЗМІЙКА', desc: 'Свайпайте для повороту • Не врізайтесь у хвости та межі' },
-  MARIO:    { title: 'МАРІО ДУЕТ',      desc: 'Кнопки ◀ ▶ та ▲ у вашій половині • Збирайте бонуси й дістаньтесь прапора!' }
+  HOCKEY:   { title: 'ПОВІТРЯНИЙ ХОКЕЙ', desc: 'Збирайте капсули • Серія 6+ = Вогняна шайба ×2 • Не сидіть у воротах!' },
+  INVADERS: { title: 'КОСМІЧНА БИТВА',  desc: 'Унікальні хвилі й арени • Збирайте бонуси ⚡🔱🛡️ • Бережіть напарника в коопі!' },
+  SNAKE:    { title: 'ПОДВІЙНА ЗМІЙКА', desc: 'Їжте кожні 7 сек або загинете! • Збирайте золоті плоди (+1) на процедурних аренах' },
+  MARIO:    { title: 'МАРІО ДУЕТ',      desc: 'Нескінченні процедурні рівні • Пружини, платформи й бонуси — біжіть до прапора!' }
 };
 function openMenu(isPause = false) {
   clearPendingPointTimeout();
@@ -3252,16 +4472,20 @@ btnPlayResume.addEventListener('click', () => {
 function resetMatch() {
   clearPendingPointTimeout();
   p1Score = 0; p2Score = 0; p1Hits = 0; p2Hits = 0; totalHits = 0; rallyHits = 0;
-  lasers = []; alienShots = []; particles = []; floatingTexts = [];
+  spaceLevel = 1; snakeLevel = 1;
+  lasers = []; alienShots = []; spacePowerups = []; particles = []; floatingTexts = [];
+  hockeyOrbs = []; hockeyOrbTimer = 0;
   ufo.active = false;
   mallet1.x = V_WIDTH / 2; mallet1.y = V_HEIGHT - 180; mallet1.targetX = mallet1.x; mallet1.targetY = mallet1.y; mallet1.touchId = null;
+  mallet1.bigTimer = 0; mallet1.smallTimer = 0; mallet1.campFrames = 0;
   mallet2.x = V_WIDTH / 2; mallet2.y = 180; mallet2.targetX = mallet2.x; mallet2.targetY = mallet2.y; mallet2.touchId = null;
+  mallet2.bigTimer = 0; mallet2.smallTimer = 0; mallet2.campFrames = 0;
   ship1.x = V_WIDTH / 2; ship1.targetX = ship1.x; ship1.touchId = null; ship1.isFiring = false;
   ship2.x = V_WIDTH / 2; ship2.targetX = ship2.x; ship2.touchId = null; ship2.isFiring = false;
   marioControls.p1 = { left: false, right: false, jump: false, prevJump: false };
   marioControls.p2 = { left: false, right: false, jump: false, prevJump: false };
   if (currentMode === 'HOCKEY') resetPuck(0);
-  else if (currentMode === 'INVADERS') initBunkers();
+  else if (currentMode === 'INVADERS') initBunkers(false);
   else if (currentMode === 'SNAKE') initSnakeMatch();
   else if (currentMode === 'MARIO') initMarioWorld(false);
   updateScoreDOM();
@@ -3293,19 +4517,19 @@ function setMode(mode) {
     document.getElementById('lbl-p1-stat').innerText = invadersShape === 'coop' ? 'Влучань/Щит' : 'Очки';
     document.getElementById('lbl-p2-stat').innerText = invadersShape === 'coop' ? 'Влучань/Щит' : 'Очки';
     document.getElementById('lbl-total-stat').innerText = 'Пострілів';
-    document.getElementById('lbl-rally-stat').innerText = 'Перехоплень';
+    document.getElementById('lbl-rally-stat').innerText = invadersShape === 'coop' ? 'Хвиля' : 'Арена';
   } else if (mode === 'SNAKE') {
     modeSnake.classList.add('active');
-    document.getElementById('lbl-p1-stat').innerText = 'Довжина';
-    document.getElementById('lbl-p2-stat').innerText = 'Довжина';
+    document.getElementById('lbl-p1-stat').innerText = 'Довж/Голод';
+    document.getElementById('lbl-p2-stat').innerText = 'Довж/Голод';
     document.getElementById('lbl-total-stat').innerText = 'З\'їдено їжі';
-    document.getElementById('lbl-rally-stat').innerText = 'Раунд';
+    document.getElementById('lbl-rally-stat').innerText = 'Арена';
   } else if (mode === 'MARIO') {
     modeMario.classList.add('active');
     document.getElementById('lbl-p1-stat').innerText = 'Стан';
     document.getElementById('lbl-p2-stat').innerText = 'Стан';
     document.getElementById('lbl-total-stat').innerText = 'Зібрано монет';
-    document.getElementById('lbl-rally-stat').innerText = 'Дистанція';
+    document.getElementById('lbl-rally-stat').innerText = 'Рівень / Дист.';
   }
   resetMatch();
 }
@@ -3368,11 +4592,13 @@ document.getElementById('wall-looped').addEventListener('click', () => {
   snakeWallMode = 'looped';
   document.getElementById('wall-looped').classList.add('active');
   document.getElementById('wall-deadly').classList.remove('active');
+  initSnakeMatch();
 });
 document.getElementById('wall-deadly').addEventListener('click', () => {
   snakeWallMode = 'deadly';
   document.getElementById('wall-deadly').classList.add('active');
   document.getElementById('wall-looped').classList.remove('active');
+  initSnakeMatch();
 });
 document.getElementById('style-flex').addEventListener('click', () => {
   snakeStyleMode = 'flex';
