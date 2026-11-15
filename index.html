@@ -1,1 +1,3461 @@
-
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Офлайн Аркади для Двох</title>
+<style>
+  :root {
+    --bg-dark: #070913;
+    --table-surface: #0b1124;
+    --card-bg: #0f172a;
+    --border-color: rgba(255, 255, 255, 0.16);
+    --p1-color: #00f0ff;
+    --p1-glow: rgba(0, 240, 255, 0.45);
+    --p2-color: #ff0055;
+    --p2-glow: rgba(255, 0, 85, 0.45);
+    --gold: #facc15;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --hud-pill-bg: rgba(7, 9, 19, 0.55);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 24px;
+    --radius-btn: 50%;
+    --app-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  /* СТРОГИЙ ДВОКОЛІРНИЙ: БІЛЕ НА ЧОРНОМУ */
+  body.theme-dark {
+    --bg-dark: #000000 !important;
+    --table-surface: #000000 !important;
+    --card-bg: #000000 !important;
+    --border-color: #ffffff !important;
+    --p1-color: #ffffff !important;
+    --p1-glow: transparent !important;
+    --p2-color: #ffffff !important;
+    --p2-glow: transparent !important;
+    --gold: #ffffff !important;
+    --text-main: #ffffff !important;
+    --text-muted: #ffffff !important;
+    --hud-pill-bg: #000000 !important;
+  }
+  body.theme-dark canvas {
+    box-shadow: none !important;
+    border: 2px solid #ffffff !important;
+  }
+  body.theme-dark .p1-color,
+  body.theme-dark .p2-color {
+    text-shadow: none !important;
+  }
+  body.theme-dark .player-info,
+  body.theme-dark .score-box {
+    background: #000000 !important;
+    border: 2px solid #ffffff !important;
+    padding: 4px 10px !important;
+    border-radius: var(--radius-sm);
+  }
+  body.theme-dark .modal-overlay {
+    background: rgba(0, 0, 0, 0.92) !important;
+    backdrop-filter: none !important;
+  }
+  body.theme-dark .modal-card {
+    background: #000000 !important;
+    border: 2px solid #ffffff !important;
+    box-shadow: none !important;
+  }
+  body.theme-dark .sub-options-box,
+  body.theme-dark .stats-grid {
+    background: #000000 !important;
+    border: 2px solid #ffffff !important;
+  }
+  body.theme-dark .round-btn,
+  body.theme-dark .target-btn,
+  body.theme-dark .mode-btn,
+  body.theme-dark .btn-secondary,
+  body.theme-dark .btn-download {
+    background: #000000 !important;
+    border: 2px solid #ffffff !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+  }
+  body.theme-dark .target-btn.active,
+  body.theme-dark .mode-btn.active,
+  body.theme-dark .btn-primary {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 2px solid #ffffff !important;
+    box-shadow: none !important;
+  }
+  body.theme-dark #goal-splash {
+    background: #000000 !important;
+    color: #ffffff !important;
+    border: 3px solid #ffffff !important;
+    text-shadow: none !important;
+  }
+  body.theme-dark .emo {
+    filter: grayscale(100%) contrast(1.3);
+  }
+  /* СТРОГИЙ ДВОКОЛІРНИЙ: ЧОРНЕ НА БІЛОМУ */
+  body.theme-light {
+    --bg-dark: #ffffff !important;
+    --table-surface: #ffffff !important;
+    --card-bg: #ffffff !important;
+    --border-color: #000000 !important;
+    --p1-color: #000000 !important;
+    --p1-glow: transparent !important;
+    --p2-color: #000000 !important;
+    --p2-glow: transparent !important;
+    --gold: #000000 !important;
+    --text-main: #000000 !important;
+    --text-muted: #000000 !important;
+    --hud-pill-bg: #ffffff !important;
+  }
+  body.theme-light canvas {
+    box-shadow: none !important;
+    border: 2px solid #000000 !important;
+  }
+  body.theme-light .p1-color,
+  body.theme-light .p2-color {
+    text-shadow: none !important;
+  }
+  body.theme-light .player-info,
+  body.theme-light .score-box {
+    background: #ffffff !important;
+    border: 2px solid #000000 !important;
+    padding: 4px 10px !important;
+    border-radius: var(--radius-sm);
+  }
+  body.theme-light .modal-overlay {
+    background: rgba(255, 255, 255, 0.92) !important;
+    backdrop-filter: none !important;
+  }
+  body.theme-light .modal-card {
+    background: #ffffff !important;
+    border: 2px solid #000000 !important;
+    box-shadow: none !important;
+  }
+  body.theme-light .sub-options-box,
+  body.theme-light .stats-grid {
+    background: #ffffff !important;
+    border: 2px solid #000000 !important;
+  }
+  body.theme-light .round-btn,
+  body.theme-light .target-btn,
+  body.theme-light .mode-btn,
+  body.theme-light .btn-secondary,
+  body.theme-light .btn-download {
+    background: #ffffff !important;
+    border: 2px solid #000000 !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+  }
+  body.theme-light .target-btn.active,
+  body.theme-light .mode-btn.active,
+  body.theme-light .btn-primary {
+    background: #000000 !important;
+    color: #ffffff !important;
+    border: 2px solid #000000 !important;
+    box-shadow: none !important;
+  }
+  body.theme-light #goal-splash {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 3px solid #000000 !important;
+    text-shadow: none !important;
+  }
+  body.theme-light .emo {
+    filter: grayscale(100%) contrast(1.3);
+  }
+  /* ПІКСЕЛЬНИЙ СТИЛЬ */
+  body.style-pixel {
+    --radius-sm: 0px !important;
+    --radius-md: 0px !important;
+    --radius-lg: 0px !important;
+    --radius-btn: 0px !important;
+    --app-font: ui-monospace, "Courier New", monospace !important;
+  }
+  body.style-pixel * {
+    border-radius: 0px !important;
+    letter-spacing: 0.4px;
+  }
+  body.style-pixel .btn,
+  body.style-pixel .target-btn,
+  body.style-pixel .mode-btn,
+  body.style-pixel .round-btn {
+    box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.7) !important;
+  }
+  body.theme-dark.style-pixel .btn,
+  body.theme-dark.style-pixel .target-btn,
+  body.theme-dark.style-pixel .mode-btn,
+  body.theme-dark.style-pixel .round-btn,
+  body.theme-dark.style-pixel .modal-card {
+    box-shadow: 4px 4px 0px #ffffff !important;
+  }
+  body.theme-light.style-pixel .btn,
+  body.theme-light.style-pixel .target-btn,
+  body.theme-light.style-pixel .mode-btn,
+  body.theme-light.style-pixel .round-btn,
+  body.theme-light.style-pixel .modal-card {
+    box-shadow: 4px 4px 0px #000000 !important;
+  }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--bg-dark);
+    font-family: var(--app-font);
+    color: var(--text-main);
+    touch-action: none;
+    transition: background-color 0.15s;
+  }
+  #game-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  }
+  #stage-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), 0 0 20px var(--p1-glow);
+    background-color: var(--table-surface);
+    border-radius: var(--radius-lg);
+    touch-action: none;
+  }
+  .player-ui {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    pointer-events: none;
+    z-index: 10;
+  }
+  #ui-top {
+    top: 0;
+    transform: rotate(180deg);
+  }
+  #ui-bottom {
+    bottom: 0;
+  }
+  .player-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--hud-pill-bg);
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    backdrop-filter: blur(4px);
+  }
+  .player-name {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+  .p1-color { color: var(--p1-color); text-shadow: 0 0 10px var(--p1-glow); }
+  .p2-color { color: var(--p2-color); text-shadow: 0 0 10px var(--p2-glow); }
+  .stat-badge {
+    font-size: 11px;
+    color: var(--text-main);
+    font-weight: 700;
+    opacity: 0.9;
+  }
+  .score-box {
+    font-size: 32px;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    background: var(--hud-pill-bg);
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    backdrop-filter: blur(4px);
+  }
+  #side-controls {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 20;
+  }
+  .round-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-btn);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(8px);
+    transition: transform 0.15s;
+    pointer-events: auto;
+  }
+  .round-btn svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+  }
+  .round-btn:active {
+    transform: scale(0.92);
+    border-color: var(--p1-color);
+  }
+  .modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(7, 9, 19, 0.88);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .modal-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 18px 15px;
+    width: 94%;
+    max-width: 410px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+    max-height: 95vh;
+    overflow-y: auto;
+  }
+  .modal-title {
+    font-size: 20px;
+    font-weight: 900;
+    margin-bottom: 3px;
+    letter-spacing: 0.5px;
+  }
+  .modal-subtitle {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    line-height: 1.35;
+  }
+  .section-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .mode-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 5px;
+    margin-bottom: 12px;
+  }
+  .mode-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 8px 2px;
+    border-radius: var(--radius-md);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .mode-btn.active {
+    background: var(--p1-color);
+    color: #030712;
+    border-color: var(--p1-color);
+  }
+  .sub-options-box {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px dashed var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 8px;
+    margin-bottom: 10px;
+  }
+  .opt-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  .target-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 5px 9px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .target-btn.active {
+    background: var(--gold);
+    color: #000;
+    border-color: var(--gold);
+    font-weight: 700;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 12px;
+    background: rgba(0, 0, 0, 0.22);
+    padding: 6px;
+    border-radius: var(--radius-sm);
+  }
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .stat-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  .stat-val {
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .menu-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .btn {
+    width: 100%;
+    padding: 11px;
+    border-radius: var(--radius-md);
+    border: none;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: transform 0.15s;
+  }
+  .btn:active {
+    transform: scale(0.98);
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--p1-color), #00a8ff);
+    color: #030712;
+  }
+  .btn-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+  }
+  .btn-download {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+  }
+  #goal-splash {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.6);
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 0.8px;
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.28s ease;
+    z-index: 50;
+    text-align: center;
+    text-shadow: 0 0 24px rgba(0, 0, 0, 0.9), 0 0 18px rgba(255, 255, 255, 0.6);
+    background: rgba(7, 9, 19, 0.82);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 12px 18px;
+    width: 84%;
+  }
+  #goal-splash.active {
+    transform: translate(-50%, -50%) scale(1.02);
+    opacity: 1;
+  }
+</style>
+</head>
+<body class="theme-colorful style-round">
+<div id="game-wrapper">
+  <div id="stage-box">
+    <!-- Верхній гравець (P2) -->
+    <div id="ui-top" class="player-ui">
+      <div class="player-info">
+        <span class="player-name p2-color">Гравець 2</span>
+        <span class="stat-badge"><span id="lbl-p2-stat">Очки</span>: <span id="p2-hits">0</span></span>
+      </div>
+      <div id="p2-score" class="score-box p2-color">0</div>
+    </div>
+    <canvas id="hockey-canvas"></canvas>
+    <!-- Нижній гравець (P1) -->
+    <div id="ui-bottom" class="player-ui">
+      <div class="player-info">
+        <span class="player-name p1-color">Гравець 1</span>
+        <span class="stat-badge"><span id="lbl-p1-stat">Очки</span>: <span id="p1-hits">0</span></span>
+      </div>
+      <div id="p1-score" class="score-box p1-color">0</div>
+    </div>
+    <!-- Швидке керування -->
+    <div id="side-controls">
+      <button id="btn-pause" class="round-btn" title="Пауза / Меню" aria-label="Пауза">
+        <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+      </button>
+      <button id="btn-sound" class="round-btn" title="Звук" aria-label="Звук">
+        <svg id="icon-sound-on" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+        <svg id="icon-sound-off" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+      </button>
+    </div>
+    <div id="goal-splash">ГОЛ!</div>
+  </div>
+  <!-- Меню / Налаштування -->
+  <div id="menu-modal" class="modal-overlay active">
+    <div class="modal-card">
+      <h2 id="modal-heading" class="modal-title">КОСМІЧНА БИТВА</h2>
+      <p id="modal-desc" class="modal-subtitle">Водіть пальцем для руху й стрільби • У коопі бережіть напарника!</p>
+      <div class="sub-options-box">
+        <div style="margin-bottom: 6px;">
+          <div class="section-label">Колір інтерфейсу:</div>
+          <div class="opt-buttons">
+            <button id="theme-btn-color" class="target-btn active"><span class="emo">🌈</span> Барвиста</button>
+            <button id="theme-btn-dark" class="target-btn"><span class="emo">🌙</span> Біле/Чорному</button>
+            <button id="theme-btn-light" class="target-btn"><span class="emo">☀️</span> Чорне/Білому</button>
+          </div>
+        </div>
+        <div>
+          <div class="section-label">Стиль форм:</div>
+          <div class="opt-buttons">
+            <button id="style-btn-round" class="target-btn active"><span class="emo">⚪</span> Округлий</button>
+            <button id="style-btn-pixel" class="target-btn"><span class="emo">⬛</span> Піксельний</button>
+          </div>
+        </div>
+      </div>
+      <div class="section-label">Виберіть гру:</div>
+      <div class="mode-selector">
+        <button id="mode-hockey" class="mode-btn"><span class="emo">🏑</span> Хокей</button>
+        <button id="mode-mario" class="mode-btn"><span class="emo">🍄</span> Маріо</button>
+        <button id="mode-invaders" class="mode-btn active"><span class="emo">👾</span> Космос</button>
+        <button id="mode-snake" class="mode-btn"><span class="emo">🐍</span> Змійка</button>
+      </div>
+      <div id="invaders-options" class="sub-options-box">
+        <div class="section-label">Режим космічного бою:</div>
+        <div class="opt-buttons">
+          <button id="inv-coop" class="target-btn active"><span class="emo">👾</span> Навала (Кооп)</button>
+          <button id="inv-simple" class="target-btn"><span class="emo">🛡️</span> Прості</button>
+          <button id="inv-complex" class="target-btn"><span class="emo">🏰</span> Складні</button>
+        </div>
+      </div>
+      <div id="snake-options" class="sub-options-box" style="display: none;">
+        <div style="margin-bottom: 6px;">
+          <div class="section-label">Стіни арени:</div>
+          <div class="opt-buttons">
+            <button id="wall-looped" class="target-btn active"><span class="emo">🔄</span> Наскрізні</button>
+            <button id="wall-deadly" class="target-btn"><span class="emo">💀</span> Смертельні</button>
+          </div>
+        </div>
+        <div>
+          <div class="section-label">Тип змійки:</div>
+          <div class="opt-buttons">
+            <button id="style-flex" class="target-btn active"><span class="emo">〰️</span> Гнучка</button>
+            <button id="style-pixel" class="target-btn"><span class="emo">🧱</span> Піксельна</button>
+          </div>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span id="lbl-total-stat" class="stat-label">Усього дій</span>
+          <span id="stat-total-hits" class="stat-val">0</span>
+        </div>
+        <div class="stat-item">
+          <span id="lbl-rally-stat" class="stat-label">Серія</span>
+          <span id="stat-rally" class="stat-val">0</span>
+        </div>
+      </div>
+      <div class="section-label">Перемога за очками:</div>
+      <div class="target-score-selector" style="display:flex; justify-content:center; gap:6px; margin-bottom:12px;">
+        <button class="target-btn" data-score="5">5</button>
+        <button class="target-btn active" data-score="10">10</button>
+        <button class="target-btn" data-score="15">15</button>
+        <button class="target-btn" data-score="25">25</button>
+      </div>
+      <div class="menu-actions">
+        <button id="btn-play-resume" class="btn btn-primary">Почати матч</button>
+        <button id="btn-reset-game" class="btn btn-secondary">Скинути рахунок</button>
+        <button id="btn-export-html" class="btn btn-download"><span class="emo">💾</span> Зберегти офлайн (.html)</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+/**
+ * СИНТЕЗАТОР ЗВУКУ (Web Audio API — 100% автономно)
+ */
+class SoundEngine {
+  constructor() {
+    this.ctx = null;
+    this.enabled = true;
+  }
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume().catch(() => {});
+    }
+  }
+  playHit(intensity = 1) {
+    if (!this.enabled || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(380 + Math.min(intensity * 320, 620), t);
+      osc.frequency.exponentialRampToValueAtTime(80, t + 0.06);
+      gain.gain.setValueAtTime(Math.min(Math.max(intensity * 0.35, 0.12), 0.6), t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(t); osc.stop(t + 0.06);
+    } catch (e) {}
+  }
+  playWallBounce() {
+    if (!this.enabled || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(190, t);
+      osc.frequency.exponentialRampToValueAtTime(55, t + 0.05);
+      gain.gain.setValueAtTime(0.22, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(t); osc.stop(t + 0.05);
+    } catch (e) {}
+  }
+  playLaser(isP1) {
+    if (!this.enabled || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(isP1 ? 880 : 690, t);
+      osc.frequency.exponentialRampToValueAtTime(120, t + 0.08);
+      gain.gain.setValueAtTime(0.14, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(t); osc.stop(t + 0.08);
+    } catch (e) {}
+  }
+  playEat() {
+    if (!this.enabled || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, t);
+      osc.frequency.setValueAtTime(880.00, t + 0.05);
+      gain.gain.setValueAtTime(0.2, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(t); osc.stop(t + 0.12);
+    } catch (e) {}
+  }
+  playCoin() {
+    if (!this.enabled || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(987.77, t);
+      osc.frequency.setValueAtTime(1318.51, t + 0.07);
+      gain.gain.setValueAtTime(0.11, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.24);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(t); osc.stop(t + 0.24);
+    } catch (e) {}
+  }
+  playJump() {
+    if (!this.enabled || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(180, t);
+      osc.frequency.exponentialRampToValueAtTime(580, t + 0.11);
+      gain.gain.setValueAtTime(0.11, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(t); osc.stop(t + 0.11);
+    } catch (e) {}
+  }
+  playBrickBump() {
+    if (!this.enabled || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(140, t);
+      osc.frequency.exponentialRampToValueAtTime(60, t + 0.07);
+      gain.gain.setValueAtTime(0.24, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(t); osc.stop(t + 0.07);
+    } catch (e) {}
+  }
+  playPowerup() {
+    if (!this.enabled || !this.ctx) return;
+    try {
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((f, idx) => {
+        const t = this.ctx.currentTime + idx * 0.055;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(f, t);
+        gain.gain.setValueAtTime(0.18, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(t); osc.stop(t + 0.12);
+      });
+    } catch (e) {}
+  }
+  playExplosion() {
+    if (!this.enabled || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime;
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.18);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(650, t);
+      filter.frequency.linearRampToValueAtTime(70, t + 0.18);
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.32, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      noise.connect(filter); filter.connect(gain); gain.connect(this.ctx.destination);
+      noise.start(t);
+    } catch (e) {}
+  }
+  playGoal() {
+    if (!this.enabled || !this.ctx) return;
+    try {
+      const notes = [261.63, 329.63, 392.00, 523.25];
+      notes.forEach((freq, idx) => {
+        const t = this.ctx.currentTime + idx * 0.08;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(freq, t);
+        gain.gain.setValueAtTime(0.15, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(t); osc.stop(t + 0.25);
+      });
+    } catch (e) {}
+  }
+}
+/**
+ * КОНСТАНТИ ТА ГЛОБАЛЬНИЙ СТАН
+ */
+const V_WIDTH = 760;
+const V_HEIGHT = 1360;
+const BORDER = 35;
+const GOAL_WIDTH = 290;
+const stageBox = document.getElementById('stage-box');
+const canvas = document.getElementById('hockey-canvas');
+const ctx = canvas.getContext('2d');
+const sound = new SoundEngine();
+let currentMode = 'INVADERS';
+let gameState = 'MENU';
+let targetScore = 10;
+let p1Score = 0;
+let p2Score = 0;
+let p1Hits = 0;
+let p2Hits = 0;
+let totalHits = 0;
+let rallyHits = 0;
+let particles = [];
+let floatingTexts = [];
+let activeTheme = 'colorful';
+let pointTimeoutId = null;
+function clearPendingPointTimeout() {
+  if (pointTimeoutId !== null) {
+    clearTimeout(pointTimeoutId);
+    pointTimeoutId = null;
+  }
+  document.getElementById('goal-splash').classList.remove('active');
+}
+function getThemeColors() {
+  if (activeTheme === 'dark') {
+    return {
+      isBW: true, bg: '#000000', surface: '#000000', fg: '#ffffff',
+      p1: '#ffffff', p2: '#ffffff', p2Outline: true,
+      text: '#ffffff', accent: '#ffffff', border: '#ffffff',
+      sky: '#000000', pipe: '#ffffff', qblock: '#ffffff', enemy: '#ffffff'
+    };
+  } else if (activeTheme === 'light') {
+    return {
+      isBW: true, bg: '#ffffff', surface: '#ffffff', fg: '#000000',
+      p1: '#000000', p2: '#000000', p2Outline: true,
+      text: '#000000', accent: '#000000', border: '#000000',
+      sky: '#ffffff', pipe: '#000000', qblock: '#000000', enemy: '#000000'
+    };
+  }
+  return {
+    isBW: false, bg: '#070913', surface: '#0b1124', fg: '#f8fafc',
+    p1: '#00f0ff', p2: '#ff0055', p2Outline: false,
+    text: '#f8fafc', accent: '#facc15', border: 'rgba(255, 255, 255, 0.16)',
+    sky: '#5c94fc', pipe: '#00a800', qblock: '#fc9838', enemy: '#854c0c'
+  };
+}
+function createSparks(x, y, color, count = 12) {
+  const theme = getThemeColors();
+  const sparkColor = theme.isBW ? theme.fg : (color || '#ffffff');
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 2 + Math.random() * 8;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      radius: 2 + Math.random() * 3.2,
+      alpha: 1,
+      color: sparkColor,
+      decay: 0.03 + Math.random() * 0.04
+    });
+  }
+}
+function addFloatingText(x, y, text, color, playerScope = 0) {
+  const theme = getThemeColors();
+  floatingTexts.push({
+    x, y, text,
+    color: theme.isBW ? theme.fg : color,
+    alpha: 1,
+    vy: -1.6,
+    scope: playerScope // 0: global, 1: P1 mario viewport, 2: P2 mario viewport
+  });
+}
+const touchInput = {
+  p1: { active: false, id: null, sx: 0, sy: 0, cx: 0, cy: 0 },
+  p2: { active: false, id: null, sx: 0, sy: 0, cx: 0, cy: 0 }
+};
+const keyState = {};
+window.addEventListener('keydown', (e) => {
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', ' '].includes(e.key)) {
+    if (gameState === 'PLAYING') e.preventDefault();
+  }
+  const code = e.code;
+  keyState[code] = true;
+  if (gameState === 'PLAYING' && currentMode === 'SNAKE') {
+    if (snakeStyleMode === 'pixel') {
+      if (code === 'KeyW' && snake1.dir.y !== 1) snake1.nextDir = { x: 0, y: -1 };
+      else if (code === 'KeyS' && snake1.dir.y !== -1) snake1.nextDir = { x: 0, y: 1 };
+      else if (code === 'KeyA' && snake1.dir.x !== 1) snake1.nextDir = { x: -1, y: 0 };
+      else if (code === 'KeyD' && snake1.dir.x !== -1) snake1.nextDir = { x: 1, y: 0 };
+      if (code === 'ArrowUp' && snake2.dir.y !== 1) snake2.nextDir = { x: 0, y: -1 };
+      else if (code === 'ArrowDown' && snake2.dir.y !== -1) snake2.nextDir = { x: 0, y: 1 };
+      else if (code === 'ArrowLeft' && snake2.dir.x !== 1) snake2.nextDir = { x: -1, y: 0 };
+      else if (code === 'ArrowRight' && snake2.dir.x !== -1) snake2.nextDir = { x: 1, y: 0 };
+    }
+  }
+});
+window.addEventListener('keyup', (e) => {
+  keyState[e.code] = false;
+});
+/**
+ * 1. ПОВІТРЯНИЙ ХОКЕЙ
+ */
+const puck = { x: V_WIDTH / 2, y: V_HEIGHT / 2, vx: 0, vy: 0, radius: 30, friction: 0.993, maxSpeed: 38 };
+let puckTrail = [];
+const mallet1 = { id: 1, x: V_WIDTH / 2, y: V_HEIGHT - 180, targetX: V_WIDTH / 2, targetY: V_HEIGHT - 180, vx: 0, vy: 0, radius: 54, touchId: null };
+const mallet2 = { id: 2, x: V_WIDTH / 2, y: 180, targetX: V_WIDTH / 2, targetY: 180, vx: 0, vy: 0, radius: 54, touchId: null };
+/**
+ * 2. КОСМІЧНА БИТВА (SPACE INVADERS)
+ */
+let invadersShape = 'coop';
+const ship1 = { x: V_WIDTH / 2, y: V_HEIGHT - 110, targetX: V_WIDTH / 2, touchId: null, isFiring: false, lastShot: 0, shields: 3, invuln: 0, rapidUntil: 0 };
+const ship2 = { x: V_WIDTH / 2, y: 110, targetX: V_WIDTH / 2, touchId: null, isFiring: false, lastShot: 0, shields: 3, invuln: 0, rapidUntil: 0 };
+let lasers = [];
+let alienShots = [];
+let bunkers = [];
+let stars = [];
+let aliens = [];
+let alienSwarm = { offset: 0, dir: 1, speed: 2.2, lastAlienShot: 0 };
+let ufo = { active: false, x: -100, y: V_HEIGHT / 2, vx: 3.5 };
+for (let i = 0; i < 65; i++) {
+  stars.push({
+    x: Math.random() * V_WIDTH,
+    y: Math.random() * V_HEIGHT,
+    radius: Math.random() * 1.8 + 0.6
+  });
+}
+function initAliens() {
+  aliens = [];
+  const startX = (V_WIDTH - (6 * 70)) / 2 + 25;
+  const startY = V_HEIGHT / 2 - (3 * 54) / 2 + 12;
+  const colors = ['#facc15', '#c084fc', '#22c55e'];
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 6; c++) {
+      aliens.push({
+        row: r, col: c,
+        baseX: startX + c * 70,
+        baseY: startY + r * 54,
+        x: startX + c * 70,
+        y: startY + r * 54,
+        w: 36, h: 26,
+        alive: true,
+        color: colors[r % colors.length]
+      });
+    }
+  }
+  alienSwarm.offset = 0;
+  alienSwarm.dir = 1;
+  alienSwarm.lastAlienShot = performance.now();
+}
+function initBunkers() {
+  bunkers = [];
+  alienShots = [];
+  ship1.shields = 3; ship1.invuln = 0; ship1.rapidUntil = 0;
+  ship2.shields = 3; ship2.invuln = 0; ship2.rapidUntil = 0;
+  let bunkerPositions = [];
+  if (invadersShape === 'coop') {
+    bunkerPositions = [{ x: 220, y: 310 }, { x: 540, y: 310 }, { x: 220, y: 1050 }, { x: 540, y: 1050 }];
+    initAliens();
+  } else if (invadersShape === 'simple') {
+    bunkerPositions = [
+      { x: 170, y: 380 }, { x: 380, y: 380 }, { x: 590, y: 380 },
+      { x: 170, y: 980 }, { x: 380, y: 980 }, { x: 590, y: 980 }
+    ];
+    aliens = [];
+  } else if (invadersShape === 'complex') {
+    bunkerPositions = [
+      { x: 170, y: 340 }, { x: 590, y: 340 },
+      { x: 260, y: 560 }, { x: 500, y: 560 },
+      { x: 380, y: 680 },
+      { x: 260, y: 800 }, { x: 500, y: 800 },
+      { x: 170, y: 1020 }, { x: 590, y: 1020 }
+    ];
+    aliens = [];
+  }
+  const cols = 5, rows = 3, blockW = 16, blockH = 12;
+  bunkerPositions.forEach(bp => {
+    const blocks = [];
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        blocks.push({
+          x: bp.x - (cols * blockW) / 2 + c * blockW,
+          y: bp.y - (rows * blockH) / 2 + r * blockH,
+          w: blockW, h: blockH, hp: 1
+        });
+      }
+    }
+    bunkers.push(blocks);
+  });
+}
+/**
+ * 3. ПОДВІЙНА ЗМІЙКА (DOUBLE SNAKE)
+ */
+let snakeWallMode = 'looped';
+let snakeStyleMode = 'flex';
+const GRID_SIZE = 30, GRID_COLS = 23, GRID_ROWS = 43;
+const ARENA_X = BORDER, ARENA_Y = BORDER;
+let snakeFoods = [];
+let snakeTickCounter = 0;
+const snake1 = { body: [], dir: { x: 0, y: -1 }, nextDir: { x: 0, y: -1 }, angle: -Math.PI / 2, targetAngle: -Math.PI / 2, speed: 4.3 };
+const snake2 = { body: [], dir: { x: 0, y: 1 }, nextDir: { x: 0, y: 1 }, angle: Math.PI / 2, targetAngle: Math.PI / 2, speed: 4.3 };
+function initSnakeMatch() {
+  snakeTickCounter = 0;
+  if (snakeStyleMode === 'pixel') {
+    snake1.body = [{ x: 11, y: 32 }, { x: 11, y: 33 }, { x: 11, y: 34 }, { x: 11, y: 35 }, { x: 11, y: 36 }];
+    snake1.dir = { x: 0, y: -1 }; snake1.nextDir = { x: 0, y: -1 };
+    snake2.body = [{ x: 11, y: 10 }, { x: 11, y: 9 }, { x: 11, y: 8 }, { x: 11, y: 7 }, { x: 11, y: 6 }];
+    snake2.dir = { x: 0, y: 1 }; snake2.nextDir = { x: 0, y: 1 };
+  } else {
+    snake1.body = [];
+    for (let i = 0; i < 35; i++) snake1.body.push({ x: V_WIDTH / 2, y: 1020 + i * 6 });
+    snake1.angle = -Math.PI / 2; snake1.targetAngle = -Math.PI / 2;
+    snake2.body = [];
+    for (let i = 0; i < 35; i++) snake2.body.push({ x: V_WIDTH / 2, y: 340 - i * 6 });
+    snake2.angle = Math.PI / 2; snake2.targetAngle = Math.PI / 2;
+  }
+  snakeFoods = [];
+  spawnSnakeFood(4);
+  p1Hits = snakeStyleMode === 'pixel' ? snake1.body.length : Math.floor(snake1.body.length / 4);
+  p2Hits = snakeStyleMode === 'pixel' ? snake2.body.length : Math.floor(snake2.body.length / 4);
+  updateScoreDOM();
+}
+function isCellOccupiedBySnakes(gx, gy) {
+  for (let i = 0; i < snake1.body.length; i++) {
+    if (snake1.body[i].x === gx && snake1.body[i].y === gy) return true;
+  }
+  for (let i = 0; i < snake2.body.length; i++) {
+    if (snake2.body[i].x === gx && snake2.body[i].y === gy) return true;
+  }
+  for (let i = 0; i < snakeFoods.length; i++) {
+    if (snakeFoods[i].gx === gx && snakeFoods[i].gy === gy) return true;
+  }
+  return false;
+}
+function spawnSnakeFood(count = 4) {
+  let attempts = 0;
+  while (snakeFoods.length < count && attempts < 200) {
+    attempts++;
+    if (snakeStyleMode === 'pixel') {
+      const gx = Math.floor(Math.random() * GRID_COLS);
+      const gy = Math.floor(Math.random() * GRID_ROWS);
+      if (!isCellOccupiedBySnakes(gx, gy)) {
+        snakeFoods.push({ gx, gy });
+      }
+    } else {
+      const fx = BORDER + 50 + Math.random() * (V_WIDTH - BORDER * 2 - 100);
+      const fy = BORDER + 50 + Math.random() * (V_HEIGHT - BORDER * 2 - 100);
+      const near1 = Math.hypot(fx - snake1.body[0].x, fy - snake1.body[0].y) < 60;
+      const near2 = Math.hypot(fx - snake2.body[0].x, fy - snake2.body[0].y) < 60;
+      if (!near1 && !near2) {
+        snakeFoods.push({ x: fx, y: fy, radius: 13 });
+      }
+    }
+  }
+}
+/**
+ * 4. МАРІО ДУЕТ (ПОВНИЙ АПГРЕЙД: КНОПКИ КЕРУВАННЯ, НЕЗАЛЕЖНІ КАМЕРИ, БОНУСИ, РІВНІ)
+ */
+const MARIO_BTN = {
+  left:  { x: 24,  y: 500, w: 96,  h: 96 },
+  right: { x: 132, y: 500, w: 96,  h: 96 },
+  jump:  { x: 632, y: 492, w: 104, h: 104 }
+};
+const marioControls = {
+  p1: { left: false, right: false, jump: false, prevJump: false },
+  p2: { left: false, right: false, jump: false, prevJump: false }
+};
+const marioWorld = {
+  level: 1,
+  blocks: [],
+  coins: [],
+  enemies: [],
+  powerups: [],
+  scenery: [],
+  popCoins: [],
+  flagX: 3800,
+  flagReached: false
+};
+function makeRunner(startX) {
+  return {
+    x: startX, y: 547, vx: 0, vy: 0,
+    onGround: false, facing: 1,
+    coyoteTimer: 0, jumpBuffer: 0,
+    coins: 0, lives: 3,
+    big: false, starTimer: 0, invuln: 0, anim: 0,
+    lastSafeX: startX, lastSafeY: 547,
+    respawnTimer: 0
+  };
+}
+const p1Runner = makeRunner(110);
+const p2Runner = makeRunner(165);
+function initMarioWorld(keepStats = false) {
+  if (!keepStats) {
+    marioWorld.level = 1;
+    Object.assign(p1Runner, makeRunner(110));
+    Object.assign(p2Runner, makeRunner(165));
+  } else {
+    const c1 = p1Runner.coins, l1 = p1Runner.lives, b1 = p1Runner.big;
+    const c2 = p2Runner.coins, l2 = p2Runner.lives, b2 = p2Runner.big;
+    Object.assign(p1Runner, makeRunner(110));
+    Object.assign(p2Runner, makeRunner(165));
+    p1Runner.coins = c1; p1Runner.lives = l1; p1Runner.big = b1;
+    p2Runner.coins = c2; p2Runner.lives = l2; p2Runner.big = b2;
+  }
+  marioWorld.blocks = [];
+  marioWorld.coins = [];
+  marioWorld.enemies = [];
+  marioWorld.powerups = [];
+  marioWorld.scenery = [];
+  marioWorld.popCoins = [];
+  marioWorld.flagX = 3700 + (marioWorld.level - 1) * 200;
+  marioWorld.flagReached = false;
+  for (let x = 80; x < marioWorld.flagX + 360; x += 290) {
+    marioWorld.scenery.push({ x: x + Math.random() * 80, y: 70 + Math.random() * 85, type: 'cloud' });
+    marioWorld.scenery.push({ x: x + 150, y: 550, type: 'bush' });
+  }
+  // Безпечна стартова платформа (0 .. 460)
+  marioWorld.blocks.push({ x: 0, y: 565, w: 460, h: 160, type: 'ground' });
+  marioWorld.blocks.push({ x: 250, y: 430, w: 38, h: 38, type: 'qblock', item: 'coin', usedP1: false, usedP2: false, bumpP1: 0, bumpP2: 0 });
+  marioWorld.coins.push({ x: 269, y: 392, gotP1: false, gotP2: false });
+  let curX = 460;
+  let prevGroundY = 565;
+  while (curX < marioWorld.flagX - 380) {
+    // Безпечна ширина провалля (78-96px, стрибок перелітає 185px)
+    const makePit = curX > 650 && Math.random() < 0.24;
+    if (makePit) {
+      curX += 78 + Math.floor(Math.random() * 20);
+      continue;
+    }
+    const segWidth = 280 + Math.floor(Math.random() * 3) * 80;
+    let groundY = 565;
+    if (curX > 1800 && prevGroundY >= 530 && Math.random() < 0.28) groundY = 505;
+    else if (curX > 950 && Math.random() < 0.28) groundY = 535;
+    prevGroundY = groundY;
+    marioWorld.blocks.push({
+      x: curX, y: groundY, w: segWidth, h: 720 - groundY, type: 'ground'
+    });
+    // Блоки з монетами та бонусами
+    if (Math.random() < 0.78) {
+      const blockBaseY = groundY - 135;
+      const roll = Math.random();
+      const qItem = roll < 0.28 ? 'mushroom' : (roll > 0.9 ? 'star' : 'coin');
+      marioWorld.blocks.push({ x: curX + 56, y: blockBaseY, w: 38, h: 38, type: 'brick', brokenP1: false, brokenP2: false, bumpP1: 0, bumpP2: 0 });
+      marioWorld.blocks.push({ x: curX + 94, y: blockBaseY, w: 38, h: 38, type: 'qblock', item: qItem, usedP1: false, usedP2: false, bumpP1: 0, bumpP2: 0 });
+      marioWorld.blocks.push({ x: curX + 132, y: blockBaseY, w: 38, h: 38, type: 'brick', brokenP1: false, brokenP2: false, bumpP1: 0, bumpP2: 0 });
+      marioWorld.coins.push({ x: curX + 75, y: blockBaseY - 36, gotP1: false, gotP2: false });
+      marioWorld.coins.push({ x: curX + 151, y: blockBaseY - 36, gotP1: false, gotP2: false });
+    }
+    // Зелена труба (у кінці сегменту) з рослиною-піраньею
+    let enemyMaxX = curX + segWidth - 24;
+    if (curX > 820 && Math.random() < 0.36) {
+      const pipeH = 62;
+      const pipeX = curX + segWidth - 84;
+      const pipeY = groundY - pipeH;
+      marioWorld.blocks.push({ x: pipeX, y: pipeY, w: 54, h: pipeH, type: 'pipe' });
+      marioWorld.enemies.push({
+        type: 'piranha',
+        pipeX, pipeY,
+        x: pipeX + 27, y: pipeY,
+        alive: true, offset: 0, timer: Math.floor(Math.random() * 80)
+      });
+      enemyMaxX = pipeX - 18;
+    }
+    // Вороги на землі: Гумби та Черепахи Купа
+    if (enemyMaxX - (curX + 35) > 90) {
+      if (curX > 1050 && Math.random() < 0.45) {
+        marioWorld.enemies.push({
+          type: 'koopa',
+          x: curX + 120, y: groundY - 18, vx: -1.45,
+          alive: true, inShell: false, shellSpeed: 0, shellGrace: 0,
+          minX: curX + 24, maxX: enemyMaxX
+        });
+      } else if (Math.random() < 0.72) {
+        marioWorld.enemies.push({
+          type: 'goomba',
+          x: curX + 100, y: groundY - 16, vx: -1.35,
+          alive: true, squished: false, squishTimer: 0,
+          minX: curX + 24, maxX: enemyMaxX
+        });
+      }
+    }
+    curX += segWidth;
+  }
+  // Фінішна зона перед флагштоком і замком (рівна земля)
+  const finishSegStart = curX;
+  marioWorld.blocks.push({
+    x: finishSegStart, y: 565, w: marioWorld.flagX + 500 - finishSegStart, h: 160, type: 'ground'
+  });
+  // Сходи перед флагштоком
+  for (let s = 0; s < 5; s++) {
+    marioWorld.blocks.push({
+      x: marioWorld.flagX - 270 + s * 38,
+      y: 565 - (s + 1) * 38,
+      w: 38,
+      h: (s + 1) * 38,
+      type: 'step'
+    });
+  }
+}
+/**
+ * АДАПТАЦІЯ ПОЛОТНА ТА КООРДИНАТ
+ */
+function resizeCanvas() {
+  const container = document.getElementById('game-wrapper');
+  const availW = container.clientWidth;
+  const availH = container.clientHeight;
+  const aspect = V_WIDTH / V_HEIGHT;
+  let w = availW;
+  let h = availW / aspect;
+  if (h > availH) {
+    h = availH;
+    w = availH * aspect;
+  }
+  stageBox.style.width = `${Math.floor(w)}px`;
+  stageBox.style.height = `${Math.floor(h)}px`;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  canvas.width = Math.floor(V_WIDTH * dpr);
+  canvas.height = Math.floor(V_HEIGHT * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+function getCanvasPoint(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: ((clientX - rect.left) / rect.width) * V_WIDTH,
+    y: ((clientY - rect.top) / rect.height) * V_HEIGHT
+  };
+}
+/**
+ * МУЛЬТИТАЧ І МИША ДЛЯ ВСІХ ІГОР
+ */
+function syncMarioTouches(touchList) {
+  marioControls.p1.left = false;
+  marioControls.p1.right = false;
+  marioControls.p1.jump = false;
+  marioControls.p2.left = false;
+  marioControls.p2.right = false;
+  marioControls.p2.jump = false;
+  for (let i = 0; i < touchList.length; i++) {
+    const pt = getCanvasPoint(touchList[i].clientX, touchList[i].clientY);
+    applyMarioPointer(pt);
+  }
+}
+function applyMarioPointer(pt) {
+  if (pt.y >= V_HEIGHT / 2) {
+    const vx = pt.x;
+    const vy = pt.y - V_HEIGHT / 2;
+    if (vy >= 465 && vy <= 635) {
+      if (vx >= 8 && vx < 128) marioControls.p1.left = true;
+      else if (vx >= 128 && vx <= 250) marioControls.p1.right = true;
+      else if (vx >= 600 && vx <= 752) marioControls.p1.jump = true;
+    }
+  } else {
+    const vx = V_WIDTH - pt.x;
+    const vy = (V_HEIGHT / 2) - pt.y;
+    if (vy >= 465 && vy <= 635) {
+      if (vx >= 8 && vx < 128) marioControls.p2.left = true;
+      else if (vx >= 128 && vx <= 250) marioControls.p2.right = true;
+      else if (vx >= 600 && vx <= 752) marioControls.p2.jump = true;
+    }
+  }
+}
+function handleTouchStart(e) {
+  sound.init();
+  if (gameState !== 'PLAYING') return;
+  if (currentMode === 'MARIO') {
+    e.preventDefault();
+    syncMarioTouches(e.touches);
+    return;
+  }
+  const touches = e.changedTouches;
+  for (let i = 0; i < touches.length; i++) {
+    const t = touches[i];
+    const pt = getCanvasPoint(t.clientX, t.clientY);
+    if (pt.y > V_HEIGHT / 2) {
+      if (currentMode === 'HOCKEY' && mallet1.touchId === null) {
+        mallet1.touchId = t.identifier; mallet1.targetX = pt.x; mallet1.targetY = pt.y;
+      } else if (currentMode === 'INVADERS' && ship1.touchId === null) {
+        ship1.touchId = t.identifier; ship1.targetX = pt.x; ship1.isFiring = true;
+      } else if (currentMode === 'SNAKE' && touchInput.p1.id === null) {
+        touchInput.p1.active = true; touchInput.p1.id = t.identifier;
+        touchInput.p1.sx = pt.x; touchInput.p1.sy = pt.y; touchInput.p1.cx = pt.x; touchInput.p1.cy = pt.y;
+      }
+    } else {
+      if (currentMode === 'HOCKEY' && mallet2.touchId === null) {
+        mallet2.touchId = t.identifier; mallet2.targetX = pt.x; mallet2.targetY = pt.y;
+      } else if (currentMode === 'INVADERS' && ship2.touchId === null) {
+        ship2.touchId = t.identifier; ship2.targetX = pt.x; ship2.isFiring = true;
+      } else if (currentMode === 'SNAKE' && touchInput.p2.id === null) {
+        touchInput.p2.active = true; touchInput.p2.id = t.identifier;
+        touchInput.p2.sx = pt.x; touchInput.p2.sy = pt.y; touchInput.p2.cx = pt.x; touchInput.p2.cy = pt.y;
+      }
+    }
+  }
+}
+function handleTouchMove(e) {
+  if (gameState !== 'PLAYING') return;
+  e.preventDefault();
+  if (currentMode === 'MARIO') {
+    syncMarioTouches(e.touches);
+    return;
+  }
+  const touches = e.changedTouches;
+  for (let i = 0; i < touches.length; i++) {
+    const t = touches[i];
+    const pt = getCanvasPoint(t.clientX, t.clientY);
+    if (currentMode === 'HOCKEY') {
+      if (t.identifier === mallet1.touchId) { mallet1.targetX = pt.x; mallet1.targetY = pt.y; }
+      else if (t.identifier === mallet2.touchId) { mallet2.targetX = pt.x; mallet2.targetY = pt.y; }
+    } else if (currentMode === 'INVADERS') {
+      if (t.identifier === ship1.touchId) ship1.targetX = pt.x;
+      else if (t.identifier === ship2.touchId) ship2.targetX = pt.x;
+    } else if (currentMode === 'SNAKE') {
+      if (t.identifier === touchInput.p1.id) {
+        touchInput.p1.cx = pt.x; touchInput.p1.cy = pt.y;
+        updateSnakeDirection(1);
+      } else if (t.identifier === touchInput.p2.id) {
+        touchInput.p2.cx = pt.x; touchInput.p2.cy = pt.y;
+        updateSnakeDirection(2);
+      }
+    }
+  }
+}
+function handleTouchEnd(e) {
+  if (currentMode === 'MARIO') {
+    syncMarioTouches(e.touches);
+    return;
+  }
+  const touches = e.changedTouches;
+  for (let i = 0; i < touches.length; i++) {
+    const t = touches[i];
+    if (currentMode === 'HOCKEY') {
+      if (t.identifier === mallet1.touchId) mallet1.touchId = null;
+      if (t.identifier === mallet2.touchId) mallet2.touchId = null;
+    } else if (currentMode === 'INVADERS') {
+      if (t.identifier === ship1.touchId) { ship1.touchId = null; ship1.isFiring = false; }
+      if (t.identifier === ship2.touchId) { ship2.touchId = null; ship2.isFiring = false; }
+    } else if (currentMode === 'SNAKE') {
+      if (t.identifier === touchInput.p1.id) { touchInput.p1.active = false; touchInput.p1.id = null; }
+      if (t.identifier === touchInput.p2.id) { touchInput.p2.active = false; touchInput.p2.id = null; }
+    }
+  }
+}
+canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+let activeMouseTarget = null;
+let mouseDownPlayer = 0;
+canvas.addEventListener('mousedown', (e) => {
+  sound.init();
+  if (gameState !== 'PLAYING') return;
+  const pt = getCanvasPoint(e.clientX, e.clientY);
+  if (currentMode === 'MARIO') {
+    mouseDownPlayer = pt.y >= V_HEIGHT / 2 ? 1 : 2;
+    applyMarioPointer(pt);
+    return;
+  }
+  if (currentMode === 'SNAKE') {
+    mouseDownPlayer = pt.y >= V_HEIGHT / 2 ? 1 : 2;
+    const inp = mouseDownPlayer === 1 ? touchInput.p1 : touchInput.p2;
+    inp.active = true; inp.sx = pt.x; inp.sy = pt.y; inp.cx = pt.x; inp.cy = pt.y;
+    return;
+  }
+  if (pt.y > V_HEIGHT / 2) {
+    if (currentMode === 'HOCKEY') activeMouseTarget = mallet1;
+    else if (currentMode === 'INVADERS') { activeMouseTarget = ship1; ship1.isFiring = true; }
+  } else {
+    if (currentMode === 'HOCKEY') activeMouseTarget = mallet2;
+    else if (currentMode === 'INVADERS') { activeMouseTarget = ship2; ship2.isFiring = true; }
+  }
+  if (activeMouseTarget) {
+    activeMouseTarget.targetX = pt.x;
+    if (activeMouseTarget.targetY !== undefined) activeMouseTarget.targetY = pt.y;
+  }
+});
+window.addEventListener('mousemove', (e) => {
+  if (gameState !== 'PLAYING') return;
+  const pt = getCanvasPoint(e.clientX, e.clientY);
+  if (currentMode === 'MARIO' && mouseDownPlayer) {
+    marioControls.p1.left = marioControls.p1.right = marioControls.p1.jump = false;
+    marioControls.p2.left = marioControls.p2.right = marioControls.p2.jump = false;
+    applyMarioPointer(pt);
+    return;
+  }
+  if (currentMode === 'SNAKE' && mouseDownPlayer) {
+    const inp = mouseDownPlayer === 1 ? touchInput.p1 : touchInput.p2;
+    inp.cx = pt.x; inp.cy = pt.y;
+    updateSnakeDirection(mouseDownPlayer);
+    return;
+  }
+  if (activeMouseTarget) {
+    activeMouseTarget.targetX = pt.x;
+    if (activeMouseTarget.targetY !== undefined) activeMouseTarget.targetY = pt.y;
+  }
+});
+window.addEventListener('mouseup', () => {
+  if (mouseDownPlayer && currentMode === 'MARIO') {
+    marioControls.p1.left = marioControls.p1.right = marioControls.p1.jump = false;
+    marioControls.p2.left = marioControls.p2.right = marioControls.p2.jump = false;
+  }
+  if (mouseDownPlayer && currentMode === 'SNAKE') {
+    touchInput.p1.active = false; touchInput.p2.active = false;
+  }
+  mouseDownPlayer = 0;
+  if (activeMouseTarget === ship1) ship1.isFiring = false;
+  if (activeMouseTarget === ship2) ship2.isFiring = false;
+  activeMouseTarget = null;
+});
+function updateSnakeDirection(playerNum) {
+  const inp = playerNum === 1 ? touchInput.p1 : touchInput.p2;
+  const dx = inp.cx - inp.sx;
+  const dy = inp.cy - inp.sy;
+  const dist = Math.hypot(dx, dy);
+  const s = playerNum === 1 ? snake1 : snake2;
+  if (snakeStyleMode === 'pixel') {
+    if (dist < 18) return;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 0 && s.dir.x !== -1) s.nextDir = { x: 1, y: 0 };
+      else if (dx < 0 && s.dir.x !== 1) s.nextDir = { x: -1, y: 0 };
+    } else {
+      if (dy > 0 && s.dir.y !== -1) s.nextDir = { x: 0, y: 1 };
+      else if (dy < 0 && s.dir.y !== 1) s.nextDir = { x: 0, y: -1 };
+    }
+    inp.sx = inp.cx;
+    inp.sy = inp.cy;
+  } else {
+    if (dist < 12) return;
+    s.targetAngle = Math.atan2(dy, dx);
+    if (dist > 55) {
+      inp.sx = inp.cx - (dx / dist) * 55;
+      inp.sy = inp.cy - (dy / dist) * 55;
+    }
+  }
+}
+/**
+ * ФІЗИКА ІГОР (ФІКСОВАНИЙ ТІК 60Hz)
+ */
+function updateHockeyPhysics() {
+  // Клавіатурне керування для ПК
+  const kbSpd = 12;
+  if (keyState['KeyA']) mallet1.targetX -= kbSpd;
+  if (keyState['KeyD']) mallet1.targetX += kbSpd;
+  if (keyState['KeyW']) mallet1.targetY -= kbSpd;
+  if (keyState['KeyS']) mallet1.targetY += kbSpd;
+  if (keyState['ArrowLeft']) mallet2.targetX -= kbSpd;
+  if (keyState['ArrowRight']) mallet2.targetX += kbSpd;
+  if (keyState['ArrowUp']) mallet2.targetY -= kbSpd;
+  if (keyState['ArrowDown']) mallet2.targetY += kbSpd;
+  mallet1.targetX = Math.max(BORDER + mallet1.radius, Math.min(V_WIDTH - BORDER - mallet1.radius, mallet1.targetX));
+  mallet1.targetY = Math.max(V_HEIGHT / 2 + mallet1.radius, Math.min(V_HEIGHT - BORDER - mallet1.radius, mallet1.targetY));
+  mallet2.targetX = Math.max(BORDER + mallet2.radius, Math.min(V_WIDTH - BORDER - mallet2.radius, mallet2.targetX));
+  mallet2.targetY = Math.max(BORDER + mallet2.radius, Math.min(V_HEIGHT / 2 - mallet2.radius, mallet2.targetY));
+  function updateM(m, minY, maxY) {
+    const cx = Math.max(BORDER + m.radius, Math.min(V_WIDTH - BORDER - m.radius, m.targetX));
+    const cy = Math.max(minY + m.radius, Math.min(maxY - m.radius, m.targetY));
+    m.vx = Math.max(-45, Math.min(45, (cx - m.x) * 0.45));
+    m.vy = Math.max(-45, Math.min(45, (cy - m.y) * 0.45));
+    m.x += m.vx; m.y += m.vy;
+  }
+  updateM(mallet1, V_HEIGHT / 2, V_HEIGHT - BORDER);
+  updateM(mallet2, BORDER, V_HEIGHT / 2);
+  const gL = (V_WIDTH - GOAL_WIDTH) / 2;
+  const gR = (V_WIDTH + GOAL_WIDTH) / 2;
+  const posts = [
+    { x: gL, y: BORDER }, { x: gR, y: BORDER },
+    { x: gL, y: V_HEIGHT - BORDER }, { x: gR, y: V_HEIGHT - BORDER }
+  ];
+  const SUB_STEPS = 6;
+  for (let s = 0; s < SUB_STEPS; s++) {
+    puck.x += puck.vx / SUB_STEPS;
+    puck.y += puck.vy / SUB_STEPS;
+    puck.vx *= Math.pow(puck.friction, 1 / SUB_STEPS);
+    puck.vy *= Math.pow(puck.friction, 1 / SUB_STEPS);
+    // Зіткнення з битками
+    [mallet1, mallet2].forEach(m => {
+      const dx = puck.x - m.x, dy = puck.y - m.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < puck.radius + m.radius && dist > 0.001) {
+        const nx = dx / dist, ny = dy / dist;
+        puck.x = m.x + nx * (puck.radius + m.radius);
+        puck.y = m.y + ny * (puck.radius + m.radius);
+        const velAlongNormal = (puck.vx - m.vx) * nx + (puck.vy - m.vy) * ny;
+        if (velAlongNormal < 0) {
+          const impulse = -1.96 * velAlongNormal;
+          puck.vx += nx * impulse + m.vx * 0.55;
+          puck.vy += ny * impulse + m.vy * 0.55;
+          const spd = Math.hypot(puck.vx, puck.vy);
+          if (spd > puck.maxSpeed) {
+            puck.vx = (puck.vx / spd) * puck.maxSpeed;
+            puck.vy = (puck.vy / spd) * puck.maxSpeed;
+          }
+          totalHits++; rallyHits++;
+          if (m.id === 1) p1Hits++; else p2Hits++;
+          updateScoreDOM();
+          sound.playHit(spd / 15);
+          createSparks((puck.x + m.x) / 2, (puck.y + m.y) / 2, m.id === 1 ? '#00f0ff' : '#ff0055', 14);
+        }
+      }
+    });
+    // Бокові стіни
+    if (puck.x - puck.radius <= BORDER) {
+      puck.x = BORDER + puck.radius; puck.vx = Math.abs(puck.vx) * 0.95; sound.playWallBounce();
+    } else if (puck.x + puck.radius >= V_WIDTH - BORDER) {
+      puck.x = V_WIDTH - BORDER - puck.radius; puck.vx = -Math.abs(puck.vx) * 0.95; sound.playWallBounce();
+    }
+    // Кути стійок воріт
+    for (let pIdx = 0; pIdx < posts.length; pIdx++) {
+      const post = posts[pIdx];
+      const dx = puck.x - post.x, dy = puck.y - post.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < puck.radius && dist > 0.001) {
+        const nx = dx / dist, ny = dy / dist;
+        puck.x = post.x + nx * puck.radius;
+        puck.y = post.y + ny * puck.radius;
+        const vn = puck.vx * nx + puck.vy * ny;
+        if (vn < 0) {
+          puck.vx -= 1.9 * vn * nx;
+          puck.vy -= 1.9 * vn * ny;
+          sound.playWallBounce();
+        }
+      }
+    }
+    // Ворота та верхній/нижній борт
+    if (puck.y - puck.radius <= BORDER) {
+      if (puck.x >= gL && puck.x <= gR) {
+        if (puck.y < BORDER - 18) {
+          createSparks(puck.x, BORDER, '#00f0ff', 28);
+          triggerPoint(1);
+          break;
+        }
+      } else {
+        puck.y = BORDER + puck.radius; puck.vy = Math.abs(puck.vy) * 0.95; sound.playWallBounce();
+      }
+    }
+    if (puck.y + puck.radius >= V_HEIGHT - BORDER) {
+      if (puck.x >= gL && puck.x <= gR) {
+        if (puck.y > V_HEIGHT - BORDER + 18) {
+          createSparks(puck.x, V_HEIGHT - BORDER, '#ff0055', 28);
+          triggerPoint(2);
+          break;
+        }
+      } else {
+        puck.y = V_HEIGHT - BORDER - puck.radius; puck.vy = -Math.abs(puck.vy) * 0.95; sound.playWallBounce();
+      }
+    }
+  }
+  if (Math.hypot(puck.vx, puck.vy) < 0.04) { puck.vx = 0; puck.vy = 0; }
+  if (Math.hypot(puck.vx, puck.vy) > 5) {
+    puckTrail.unshift({ x: puck.x, y: puck.y, alpha: 0.6 });
+    if (puckTrail.length > 7) puckTrail.pop();
+  } else if (puckTrail.length > 0) {
+    puckTrail.pop();
+  }
+}
+function updateInvadersPhysics() {
+  const now = performance.now();
+  const theme = getThemeColors();
+  // Клавіатура для ПК
+  if (keyState['KeyA']) ship1.targetX -= 10;
+  if (keyState['KeyD']) ship1.targetX += 10;
+  if (keyState['ArrowLeft']) ship2.targetX -= 10;
+  if (keyState['ArrowRight']) ship2.targetX += 10;
+  const clampX = (x) => Math.max(BORDER + 36, Math.min(V_WIDTH - BORDER - 36, x));
+  ship1.targetX = clampX(ship1.targetX);
+  ship2.targetX = clampX(ship2.targetX);
+  ship1.x += (ship1.targetX - ship1.x) * 0.25;
+  ship2.x += (ship2.targetX - ship2.x) * 0.25;
+  if (ship1.invuln > 0) ship1.invuln--;
+  if (ship2.invuln > 0) ship2.invuln--;
+  const fire1 = ship1.isFiring || keyState['KeyW'] || keyState['Space'];
+  const fire2 = ship2.isFiring || keyState['ArrowDown'] || keyState['Enter'];
+  const delay1 = now < ship1.rapidUntil ? 120 : 225;
+  const delay2 = now < ship2.rapidUntil ? 120 : 225;
+  if (fire1 && now - ship1.lastShot > delay1) {
+    lasers.push({ x: ship1.x, y: ship1.y - 20, vy: -17, from: 1, color: theme.p1, dead: false });
+    ship1.lastShot = now; sound.playLaser(true); totalHits++; updateScoreDOM();
+  }
+  if (fire2 && now - ship2.lastShot > delay2) {
+    lasers.push({ x: ship2.x, y: ship2.y + 20, vy: 17, from: 2, color: theme.p2, dead: false });
+    ship2.lastShot = now; sound.playLaser(false); totalHits++; updateScoreDOM();
+  }
+  // Навала прибульців (Кооп)
+  if (invadersShape === 'coop' && aliens.length > 0) {
+    alienSwarm.offset += alienSwarm.dir * alienSwarm.speed;
+    if (alienSwarm.offset > 85) alienSwarm.dir = -1;
+    if (alienSwarm.offset < -85) alienSwarm.dir = 1;
+    const aliveAliens = [];
+    aliens.forEach(a => {
+      a.x = a.baseX + alienSwarm.offset;
+      if (a.alive) aliveAliens.push(a);
+    });
+    if (aliveAliens.length === 0) {
+      sound.playGoal();
+      alienSwarm.speed = Math.min(5.2, alienSwarm.speed + 0.45);
+      addFloatingText(V_WIDTH / 2, V_HEIGHT / 2, 'НОВА ХВИЛЯ!', '#facc15', 0);
+      initAliens();
+    } else if (now - alienSwarm.lastAlienShot > Math.max(650, 1250 - alienSwarm.speed * 130)) {
+      const shooter = aliveAliens[Math.floor(Math.random() * aliveAliens.length)];
+      const dir = Math.random() < 0.5 ? 1 : -1;
+      alienShots.push({ x: shooter.x, y: shooter.y + dir * 14, vy: dir * 7.2, dead: false });
+      alienSwarm.lastAlienShot = now;
+    }
+  }
+  // НЛО
+  if (!ufo.active && Math.random() < 0.0032) {
+    ufo.active = true;
+    ufo.x = Math.random() > 0.5 ? -60 : V_WIDTH + 60;
+    ufo.vx = ufo.x < 0 ? 3.5 : -3.5;
+  }
+  if (ufo.active) {
+    ufo.x += ufo.vx;
+    if (ufo.x < -80 || ufo.x > V_WIDTH + 80) ufo.active = false;
+  }
+  // Оновлення лазерів (без мутаційних багів індексів!)
+  for (let i = 0; i < lasers.length; i++) {
+    const l = lasers[i];
+    if (l.dead) continue;
+    l.y += l.vy;
+    if (l.y < 0 || l.y > V_HEIGHT) { l.dead = true; continue; }
+    // Лазер vs Лазер
+    for (let j = i + 1; j < lasers.length; j++) {
+      const o = lasers[j];
+      if (!o.dead && l.from !== o.from && Math.hypot(l.x - o.x, l.y - o.y) < 18) {
+        l.dead = true; o.dead = true;
+        createSparks((l.x + o.x) / 2, (l.y + o.y) / 2, theme.accent, 8);
+        rallyHits++;
+        document.getElementById('stat-rally').innerText = rallyHits;
+        break;
+      }
+    }
+    if (l.dead) continue;
+    // Лазер vs Плазма прибульців
+    for (let s = 0; s < alienShots.length; s++) {
+      const as = alienShots[s];
+      if (!as.dead && Math.hypot(l.x - as.x, l.y - as.y) < 18) {
+        l.dead = true; as.dead = true;
+        createSparks(as.x, as.y, '#22c55e', 8);
+        break;
+      }
+    }
+    if (l.dead) continue;
+    // Бункери
+    for (let b = 0; b < bunkers.length; b++) {
+      const blocks = bunkers[b];
+      for (let k = 0; k < blocks.length; k++) {
+        const bl = blocks[k];
+        if (bl.hp > 0 && l.x >= bl.x && l.x <= bl.x + bl.w && l.y >= bl.y && l.y <= bl.y + bl.h) {
+          bl.hp = 0; l.dead = true;
+          createSparks(l.x, l.y, theme.accent, 6);
+          break;
+        }
+      }
+      if (l.dead) break;
+    }
+    if (l.dead) continue;
+    // Прибульці (Кооп)
+    if (invadersShape === 'coop') {
+      for (let a = 0; a < aliens.length; a++) {
+        const al = aliens[a];
+        if (al.alive && Math.abs(l.x - al.x) < al.w / 2 + 2 && Math.abs(l.y - al.y) < al.h / 2 + 4) {
+          al.alive = false; l.dead = true;
+          createSparks(al.x, al.y, al.color, 16);
+          sound.playExplosion();
+          if (l.from === 1) { p1Score++; p1Hits++; } else { p2Score++; p2Hits++; }
+          updateScoreDOM();
+          if (p1Score >= targetScore || p2Score >= targetScore) {
+            endGame(p1Score >= targetScore ? 1 : 2);
+            return;
+          }
+          break;
+        }
+      }
+      if (l.dead) continue;
+    }
+    // НЛО
+    if (ufo.active && Math.hypot(l.x - ufo.x, l.y - ufo.y) < 32) {
+      createSparks(ufo.x, ufo.y, theme.accent, 24);
+      sound.playPowerup();
+      addFloatingText(ufo.x, ufo.y, '+2 ШВИДКИЙ ВОГОНЬ!', '#facc15', 0);
+      ufo.active = false; l.dead = true;
+      if (l.from === 1) {
+        p1Score += 2; p1Hits += 2; ship1.rapidUntil = now + 4500;
+      } else {
+        p2Score += 2; p2Hits += 2; ship2.rapidUntil = now + 4500;
+      }
+      updateScoreDOM();
+      if (p1Score >= targetScore || p2Score >= targetScore) {
+        endGame(p1Score >= targetScore ? 1 : 2);
+        return;
+      }
+      continue;
+    }
+    // Влучання у гравця
+    if (l.from === 1 && Math.abs(l.x - ship2.x) < 30 && Math.abs(l.y - ship2.y) < 20) {
+      l.dead = true; sound.playExplosion();
+      if (invadersShape === 'coop') {
+        triggerCoopFailure(1);
+      } else {
+        createSparks(ship2.x, ship2.y, theme.p2, 35);
+        triggerPoint(1);
+      }
+      return;
+    } else if (l.from === 2 && Math.abs(l.x - ship1.x) < 30 && Math.abs(l.y - ship1.y) < 20) {
+      l.dead = true; sound.playExplosion();
+      if (invadersShape === 'coop') {
+        triggerCoopFailure(2);
+      } else {
+        createSparks(ship1.x, ship1.y, theme.p1, 35);
+        triggerPoint(2);
+      }
+      return;
+    }
+  }
+  // Постріли прибульців у Кооп режимі
+  for (let i = 0; i < alienShots.length; i++) {
+    const as = alienShots[i];
+    if (as.dead) continue;
+    as.y += as.vy;
+    if (as.y < 0 || as.y > V_HEIGHT) { as.dead = true; continue; }
+    for (let b = 0; b < bunkers.length; b++) {
+      const blocks = bunkers[b];
+      for (let k = 0; k < blocks.length; k++) {
+        const bl = blocks[k];
+        if (bl.hp > 0 && as.x >= bl.x && as.x <= bl.x + bl.w && as.y >= bl.y && as.y <= bl.y + bl.h) {
+          bl.hp = 0; as.dead = true;
+          createSparks(as.x, as.y, theme.accent, 6);
+          break;
+        }
+      }
+      if (as.dead) break;
+    }
+    if (as.dead) continue;
+    if (ship1.invuln === 0 && Math.abs(as.x - ship1.x) < 28 && Math.abs(as.y - ship1.y) < 18) {
+      as.dead = true; ship1.shields--; ship1.invuln = 75;
+      sound.playExplosion(); createSparks(ship1.x, ship1.y, theme.p1, 24);
+      if (ship1.shields <= 0 && ship2.shields <= 0) {
+        triggerCoopShieldWipe();
+        return;
+      }
+      updateScoreDOM();
+    } else if (ship2.invuln === 0 && Math.abs(as.x - ship2.x) < 28 && Math.abs(as.y - ship2.y) < 18) {
+      as.dead = true; ship2.shields--; ship2.invuln = 75;
+      sound.playExplosion(); createSparks(ship2.x, ship2.y, theme.p2, 24);
+      if (ship1.shields <= 0 && ship2.shields <= 0) {
+        triggerCoopShieldWipe();
+        return;
+      }
+      updateScoreDOM();
+    }
+  }
+  lasers = lasers.filter(l => !l.dead);
+  alienShots = alienShots.filter(s => !s.dead);
+}
+function triggerCoopFailure(killer) {
+  gameState = 'POINT_PAUSE';
+  const splash = document.getElementById('goal-splash');
+  splash.innerText = `ДРУЖНІЙ ВОГОНЬ! Г${killer} ЗБИВ НАПАРНИКА!`;
+  splash.className = 'p2-color active';
+  createSparks(killer === 1 ? ship2.x : ship1.x, killer === 1 ? ship2.y : ship1.y, '#ef4444', 45);
+  clearTimeout(pointTimeoutId);
+  pointTimeoutId = setTimeout(() => {
+    pointTimeoutId = null;
+    splash.classList.remove('active');
+    lasers = []; alienShots = [];
+    initAliens();
+    gameState = 'PLAYING';
+  }, 1700);
+}
+function triggerCoopShieldWipe() {
+  gameState = 'POINT_PAUSE';
+  const splash = document.getElementById('goal-splash');
+  splash.innerText = 'ЩИТИ ЗНИЩЕНО! НОВА СПРОБА';
+  splash.className = 'p2-color active';
+  clearTimeout(pointTimeoutId);
+  pointTimeoutId = setTimeout(() => {
+    pointTimeoutId = null;
+    splash.classList.remove('active');
+    lasers = [];
+    initBunkers();
+    updateScoreDOM();
+    gameState = 'PLAYING';
+  }, 1700);
+}
+function updateSnakePhysics() {
+  if (snakeStyleMode === 'pixel') {
+    snakeTickCounter++;
+    if (snakeTickCounter < 6) return;
+    snakeTickCounter = 0;
+    snake1.dir = snake1.nextDir; snake2.dir = snake2.nextDir;
+    let h1 = { x: snake1.body[0].x + snake1.dir.x, y: snake1.body[0].y + snake1.dir.y };
+    let h2 = { x: snake2.body[0].x + snake2.dir.x, y: snake2.body[0].y + snake2.dir.y };
+    let crash1 = false, crash2 = false;
+    if (snakeWallMode === 'deadly') {
+      if (h1.x < 0 || h1.x >= GRID_COLS || h1.y < 0 || h1.y >= GRID_ROWS) crash1 = true;
+      if (h2.x < 0 || h2.x >= GRID_COLS || h2.y < 0 || h2.y >= GRID_ROWS) crash2 = true;
+    } else {
+      h1.x = ((h1.x % GRID_COLS) + GRID_COLS) % GRID_COLS;
+      h1.y = ((h1.y % GRID_ROWS) + GRID_ROWS) % GRID_ROWS;
+      h2.x = ((h2.x % GRID_COLS) + GRID_COLS) % GRID_COLS;
+      h2.y = ((h2.y % GRID_ROWS) + GRID_ROWS) % GRID_ROWS;
+    }
+    if (h1.x === h2.x && h1.y === h2.y) { crash1 = true; crash2 = true; }
+    for (let i = 0; i < snake1.body.length - 1; i++) {
+      if (h1.x === snake1.body[i].x && h1.y === snake1.body[i].y) crash1 = true;
+      if (h2.x === snake1.body[i].x && h2.y === snake1.body[i].y) crash2 = true;
+    }
+    for (let i = 0; i < snake2.body.length - 1; i++) {
+      if (h1.x === snake2.body[i].x && h1.y === snake2.body[i].y) crash1 = true;
+      if (h2.x === snake2.body[i].x && h2.y === snake2.body[i].y) crash2 = true;
+    }
+    if (crash1 || crash2) { handleSnakeCrash(crash1, crash2); return; }
+    snake1.body.unshift(h1); snake2.body.unshift(h2);
+    let eat1 = false, eat2 = false;
+    for (let i = snakeFoods.length - 1; i >= 0; i--) {
+      const f = snakeFoods[i];
+      if (h1.x === f.gx && h1.y === f.gy) { eat1 = true; snakeFoods.splice(i, 1); sound.playEat(); }
+      else if (h2.x === f.gx && h2.y === f.gy) { eat2 = true; snakeFoods.splice(i, 1); sound.playEat(); }
+    }
+    if (!eat1) snake1.body.pop(); else { totalHits++; p1Hits = snake1.body.length; }
+    if (!eat2) snake2.body.pop(); else { totalHits++; p2Hits = snake2.body.length; }
+    if (snakeFoods.length < 4) spawnSnakeFood(4);
+    updateScoreDOM();
+  } else {
+    // Клавіатурне керування в гнучкому режимі
+    if (keyState['KeyA']) snake1.targetAngle -= 0.08;
+    if (keyState['KeyD']) snake1.targetAngle += 0.08;
+    if (keyState['ArrowLeft']) snake2.targetAngle -= 0.08;
+    if (keyState['ArrowRight']) snake2.targetAngle += 0.08;
+    function stepFlex(s) {
+      let diff = s.targetAngle - s.angle;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      s.angle += Math.max(-0.14, Math.min(0.14, diff * 0.14));
+      return {
+        x: s.body[0].x + Math.cos(s.angle) * s.speed,
+        y: s.body[0].y + Math.sin(s.angle) * s.speed
+      };
+    }
+    let h1 = stepFlex(snake1);
+    let h2 = stepFlex(snake2);
+    let crash1 = false, crash2 = false;
+    const minX = BORDER + 14, maxX = V_WIDTH - BORDER - 14;
+    const minY = BORDER + 14, maxY = V_HEIGHT - BORDER - 14;
+    if (snakeWallMode === 'deadly') {
+      if (h1.x < minX || h1.x > maxX || h1.y < minY || h1.y > maxY) crash1 = true;
+      if (h2.x < minX || h2.x > maxX || h2.y < minY || h2.y > maxY) crash2 = true;
+    } else {
+      if (h1.x < minX) h1.x = maxX; else if (h1.x > maxX) h1.x = minX;
+      if (h1.y < minY) h1.y = maxY; else if (h1.y > maxY) h1.y = minY;
+      if (h2.x < minX) h2.x = maxX; else if (h2.x > maxX) h2.x = minX;
+      if (h2.y < minY) h2.y = maxY; else if (h2.y > maxY) h2.y = minY;
+    }
+    if (Math.hypot(h1.x - h2.x, h1.y - h2.y) < 21) { crash1 = true; crash2 = true; }
+    for (let i = 0; i < snake1.body.length; i++) {
+      if (i >= 16 && Math.hypot(h1.x - snake1.body[i].x, h1.y - snake1.body[i].y) < 15) crash1 = true;
+      if (Math.hypot(h2.x - snake1.body[i].x, h2.y - snake1.body[i].y) < 16) crash2 = true;
+    }
+    for (let i = 0; i < snake2.body.length; i++) {
+      if (Math.hypot(h1.x - snake2.body[i].x, h1.y - snake2.body[i].y) < 16) crash1 = true;
+      if (i >= 16 && Math.hypot(h2.x - snake2.body[i].x, h2.y - snake2.body[i].y) < 15) crash2 = true;
+    }
+    if (crash1 || crash2) { handleSnakeCrash(crash1, crash2); return; }
+    snake1.body.unshift(h1); snake2.body.unshift(h2);
+    let eat1 = false, eat2 = false;
+    for (let i = snakeFoods.length - 1; i >= 0; i--) {
+      const f = snakeFoods[i];
+      if (Math.hypot(h1.x - f.x, h1.y - f.y) < 24) { eat1 = true; snakeFoods.splice(i, 1); sound.playEat(); }
+      else if (Math.hypot(h2.x - f.x, h2.y - f.y) < 24) { eat2 = true; snakeFoods.splice(i, 1); sound.playEat(); }
+    }
+    if (!eat1) snake1.body.pop(); else {
+      totalHits++; p1Hits = Math.floor(snake1.body.length / 4);
+      for (let k = 0; k < 6; k++) snake1.body.push({ ...snake1.body[snake1.body.length - 1] });
+    }
+    if (!eat2) snake2.body.pop(); else {
+      totalHits++; p2Hits = Math.floor(snake2.body.length / 4);
+      for (let k = 0; k < 6; k++) snake2.body.push({ ...snake2.body[snake2.body.length - 1] });
+    }
+    if (snakeFoods.length < 4) spawnSnakeFood(4);
+    updateScoreDOM();
+  }
+}
+function handleSnakeCrash(crash1, crash2) {
+  sound.playExplosion();
+  const splash = document.getElementById('goal-splash');
+  if (crash1 && crash2) {
+    splash.innerText = 'ЛОБОВИЙ УДАР! НІЧИЯ';
+    splash.className = 'active';
+  } else if (crash1) {
+    p2Score++;
+    splash.innerText = 'Г1 ВРІЗАВСЯ! ОЧКО Г2';
+    splash.className = 'p2-color active';
+  } else {
+    p1Score++;
+    splash.innerText = 'Г2 ВРІЗАВСЯ! ОЧКО Г1';
+    splash.className = 'p1-color active';
+  }
+  updateScoreDOM();
+  gameState = 'POINT_PAUSE';
+  clearTimeout(pointTimeoutId);
+  pointTimeoutId = setTimeout(() => {
+    pointTimeoutId = null;
+    splash.classList.remove('active');
+    if (p1Score >= targetScore || p2Score >= targetScore) endGame(p1Score >= targetScore ? 1 : 2);
+    else { initSnakeMatch(); gameState = 'PLAYING'; }
+  }, 1450);
+}
+/**
+ * МАРІО ДУЕТ: ФІЗИКА ТА БОНУСИ
+ */
+function awardMarioScore(playerNum, pts, popupText, x, y) {
+  if (playerNum === 1) p1Score += pts; else p2Score += pts;
+  if (popupText) addFloatingText(x, y - 28, popupText, '#facc15', playerNum);
+  updateScoreDOM();
+  if (p1Score >= targetScore || p2Score >= targetScore) {
+    endGame(p1Score >= targetScore ? 1 : 2);
+    return true;
+  }
+  return false;
+}
+function updateMarioPhysics() {
+  const c1 = {
+    left: marioControls.p1.left || keyState['KeyA'],
+    right: marioControls.p1.right || keyState['KeyD'],
+    jump: marioControls.p1.jump || keyState['KeyW'] || keyState['Space']
+  };
+  const c2 = {
+    left: marioControls.p2.left || keyState['ArrowLeft'],
+    right: marioControls.p2.right || keyState['ArrowRight'],
+    jump: marioControls.p2.jump || keyState['ArrowUp']
+  };
+  function isSolidForPlayer(b, pNum) {
+    if (b.type === 'brick') return !(pNum === 1 ? b.brokenP1 : b.brokenP2);
+    return true;
+  }
+  function hurtPlayer(p, pNum, isPit = false) {
+    if (p.respawnTimer > 0) return;
+    if (!isPit && (p.invuln > 0 || p.starTimer > 0)) return;
+    if (!isPit && p.big) {
+      p.big = false;
+      p.invuln = 85;
+      p.vy = -8;
+      sound.playBrickBump();
+      addFloatingText(p.x, p.y - 30, 'ЗМЕНШЕННЯ!', '#ef4444', pNum);
+      return;
+    }
+    p.lives--;
+    sound.playExplosion();
+    createSparks(p.x, p.y, '#ef4444', 20);
+    if (p.lives <= 0) {
+      // Суперник отримує +2 очки, гравець відроджується за 1.5с із 3 життями
+      const oppNum = pNum === 1 ? 2 : 1;
+      addFloatingText(p.x, p.y - 30, 'ВТРАТА ВСІХ ЖИТТІВ!', '#ef4444', pNum);
+      p.respawnTimer = 90;
+      p.lives = 3;
+      p.big = false;
+      if (awardMarioScore(oppNum, 2, 'СУПЕРНИК ВПАВ +2!', oppNum === 1 ? p1Runner.x : p2Runner.x, 380)) return;
+      return;
+    }
+    if (isPit) {
+      p.x = p.lastSafeX;
+      p.y = p.lastSafeY - 36;
+      p.vx = 0; p.vy = 0;
+      p.invuln = 85;
+    } else {
+      p.invuln = 85;
+      p.vy = -8;
+    }
+    updateScoreDOM();
+  }
+  function bumpEnemyAboveBlock(b, pNum) {
+    marioWorld.enemies.forEach(e => {
+      if (!e.alive || e.type === 'piranha') return;
+      if (e.x > b.x - 10 && e.x < b.x + b.w + 10 && Math.abs((e.y + 16) - b.y) < 14) {
+        e.alive = false;
+        sound.playHit(1.5);
+        createSparks(e.x, e.y, '#facc15', 14);
+        awardMarioScore(pNum, 1, '+1 ЗБИТО!', e.x, e.y);
+      }
+    });
+  }
+  function updatePlayer(p, pNum, ctrl, prevCtrl) {
+    if (p.respawnTimer > 0) {
+      p.respawnTimer--;
+      if (p.respawnTimer === 0) {
+        p.x = p.lastSafeX; p.y = p.lastSafeY - 36;
+        p.vx = 0; p.vy = 0; p.invuln = 90;
+        updateScoreDOM();
+      }
+      return;
+    }
+    if (p.invuln > 0) p.invuln--;
+    if (p.starTimer > 0) p.starTimer--;
+    const speedCap = p.starTimer > 0 ? 5.6 : 4.7;
+    if (ctrl.left && !ctrl.right) {
+      p.vx = Math.max(-speedCap, p.vx - 0.72);
+      p.facing = -1;
+    } else if (ctrl.right && !ctrl.left) {
+      p.vx = Math.min(speedCap, p.vx + 0.72);
+      p.facing = 1;
+    } else {
+      p.vx *= 0.74;
+      if (Math.abs(p.vx) < 0.15) p.vx = 0;
+    }
+    const jumpJustPressed = ctrl.jump && !prevCtrl.jump;
+    if (jumpJustPressed) p.jumpBuffer = 7;
+    else if (p.jumpBuffer > 0) p.jumpBuffer--;
+    if (p.onGround) p.coyoteTimer = 7;
+    else if (p.coyoteTimer > 0) p.coyoteTimer--;
+    if (p.jumpBuffer > 0 && p.coyoteTimer > 0) {
+      p.vy = -14.2;
+      p.onGround = false;
+      p.coyoteTimer = 0;
+      p.jumpBuffer = 0;
+      sound.playJump();
+    }
+    // Змінна висота стрибка при відпусканні кнопки
+    if (!ctrl.jump && p.vy < -5.5) {
+      p.vy *= 0.65;
+    }
+    p.vy = Math.min(15.5, p.vy + 0.68);
+    if (Math.abs(p.vx) > 0.4) p.anim += 0.24;
+    const halfW = 13;
+    const topOff = p.big ? 36 : 28;
+    const botOff = 18;
+    // 1. Горизонтальний рух та колізії зі стінами/трубами/сходами
+    p.x += p.vx;
+    p.x = Math.max(24, Math.min(marioWorld.flagX + 180, p.x));
+    for (let i = 0; i < marioWorld.blocks.length; i++) {
+      const b = marioWorld.blocks[i];
+      if (!isSolidForPlayer(b, pNum)) continue;
+      if (p.y + botOff - 3 > b.y && p.y - topOff + 3 < b.y + b.h) {
+        if (p.x + halfW > b.x && p.x - halfW < b.x + b.w) {
+          if (p.vx > 0) { p.x = b.x - halfW; p.vx = 0; }
+          else if (p.vx < 0) { p.x = b.x + b.w + halfW; p.vx = 0; }
+        }
+      }
+    }
+    // 2. Вертикальний рух та колізії з підлогою/блоками
+    p.y += p.vy;
+    p.onGround = false;
+    for (let i = 0; i < marioWorld.blocks.length; i++) {
+      const b = marioWorld.blocks[i];
+      if (!isSolidForPlayer(b, pNum)) continue;
+      if (p.x + halfW - 2 > b.x && p.x - halfW + 2 < b.x + b.w) {
+        if (p.vy >= 0 && p.y + botOff > b.y && p.y + botOff - p.vy <= b.y + 12) {
+          p.y = b.y - botOff;
+          p.vy = 0;
+          p.onGround = true;
+          if (b.type === 'ground' || b.type === 'step') {
+            if (p.x > b.x + 18 && p.x < b.x + b.w - 18) {
+              p.lastSafeX = p.x;
+              p.lastSafeY = b.y;
+            }
+          }
+        } else if (p.vy < 0 && p.y - topOff < b.y + b.h && p.y - topOff - p.vy >= b.y + b.h - 14) {
+          p.y = b.y + b.h + topOff;
+          p.vy = 1.2;
+          if (b.type === 'qblock') {
+            const alreadyUsed = pNum === 1 ? b.usedP1 : b.usedP2;
+            if (!alreadyUsed) {
+              if (pNum === 1) { b.usedP1 = true; b.bumpP1 = 10; } else { b.usedP2 = true; b.bumpP2 = 10; }
+              bumpEnemyAboveBlock(b, pNum);
+              if (b.item === 'mushroom') {
+                marioWorld.powerups.push({
+                  type: 'mushroom', owner: pNum,
+                  x: b.x + b.w / 2, y: b.y - 16,
+                  vx: 2.0, vy: -3.5, active: true
+                });
+                sound.playPowerup();
+              } else if (b.item === 'star') {
+                marioWorld.powerups.push({
+                  type: 'star', owner: pNum,
+                  x: b.x + b.w / 2, y: b.y - 16,
+                  vx: 2.5, vy: -6.0, active: true
+                });
+                sound.playPowerup();
+              } else {
+                p.coins++;
+                totalHits++;
+                sound.playCoin();
+                marioWorld.popCoins.push({ x: b.x + b.w / 2, y: b.y - 10, vy: -7, life: 24, owner: pNum });
+                if (p.coins % 3 === 0) {
+                  if (awardMarioScore(pNum, 1, '+1 ★', b.x + b.w / 2, b.y)) return;
+                } else {
+                  addFloatingText(b.x + b.w / 2, b.y - 16, '+1 🪙', '#facc15', pNum);
+                  updateScoreDOM();
+                }
+              }
+            } else {
+              sound.playBrickBump();
+            }
+          } else if (b.type === 'brick') {
+            bumpEnemyAboveBlock(b, pNum);
+            if (p.big) {
+              if (pNum === 1) b.brokenP1 = true; else b.brokenP2 = true;
+              sound.playHit(1.5);
+              createSparks(b.x + b.w / 2, b.y + b.h / 2, '#c84c0c', 12);
+              if (awardMarioScore(pNum, 1, 'ЗЛАМАНО +1!', b.x + b.w / 2, b.y)) return;
+            } else {
+              if (pNum === 1) b.bumpP1 = 7; else b.bumpP2 = 7;
+              sound.playBrickBump();
+            }
+          }
+        }
+      }
+    }
+    if (p.y > 675) {
+      hurtPlayer(p, pNum, true);
+    }
+  }
+  updatePlayer(p1Runner, 1, c1, { jump: marioControls.p1.prevJump });
+  updatePlayer(p2Runner, 2, c2, { jump: marioControls.p2.prevJump });
+  marioControls.p1.prevJump = c1.jump;
+  marioControls.p2.prevJump = c2.jump;
+  // Анімації блоків та монетних сплесків
+  marioWorld.blocks.forEach(b => {
+    if (b.bumpP1 > 0) b.bumpP1 *= 0.72;
+    if (b.bumpP2 > 0) b.bumpP2 *= 0.72;
+  });
+  for (let i = marioWorld.popCoins.length - 1; i >= 0; i--) {
+    const pc = marioWorld.popCoins[i];
+    pc.y += pc.vy; pc.vy += 0.55; pc.life--;
+    if (pc.life <= 0) marioWorld.popCoins.splice(i, 1);
+  }
+  // Бонуси (Гриб та Зірочка)
+  for (let i = marioWorld.powerups.length - 1; i >= 0; i--) {
+    const pu = marioWorld.powerups[i];
+    if (!pu.active) { marioWorld.powerups.splice(i, 1); continue; }
+    pu.vy = Math.min(10, pu.vy + 0.45);
+    pu.x += pu.vx;
+    pu.y += pu.vy;
+    marioWorld.blocks.forEach(b => {
+      if (!isSolidForPlayer(b, pu.owner)) return;
+      if (pu.x + 12 > b.x && pu.x - 12 < b.x + b.w) {
+        if (pu.vy >= 0 && pu.y + 14 > b.y && pu.y + 14 - pu.vy <= b.y + 10) {
+          pu.y = b.y - 14;
+          pu.vy = pu.type === 'star' ? -8.5 : 0;
+        } else if (pu.y + 10 > b.y && pu.y - 10 < b.y + b.h) {
+          pu.vx = -pu.vx;
+        }
+      }
+    });
+    const target = pu.owner === 1 ? p1Runner : p2Runner;
+    if (target.respawnTimer === 0 && Math.hypot(target.x - pu.x, target.y - pu.y) < 30) {
+      pu.active = false;
+      sound.playPowerup();
+      if (pu.type === 'mushroom') {
+        target.big = true;
+        if (awardMarioScore(pu.owner, 1, '🍄 СУПЕР +1!', pu.x, pu.y)) return;
+      } else {
+        target.starTimer = 360;
+        if (awardMarioScore(pu.owner, 2, '⭐ ЗІРКА +2!', pu.x, pu.y)) return;
+      }
+    }
+    if (pu.y > 700) pu.active = false;
+  }
+  // Розумні вороги (Гумба, Купа, Піранья)
+  marioWorld.enemies.forEach(e => {
+    if (!e.alive) {
+      if (e.squished) {
+        e.squishTimer--;
+        if (e.squishTimer <= 0) e.squished = false;
+      }
+      return;
+    }
+    if (e.type === 'goomba') {
+      e.x += e.vx;
+      if (e.x <= e.minX) { e.x = e.minX; e.vx = Math.abs(e.vx); }
+      else if (e.x >= e.maxX) { e.x = e.maxX; e.vx = -Math.abs(e.vx); }
+      [[p1Runner, 1], [p2Runner, 2]].forEach(([p, pNum]) => {
+        if (p.respawnTimer > 0) return;
+        if (Math.abs(p.x - e.x) < 25 && Math.abs(p.y - e.y) < 28) {
+          if (p.starTimer > 0 || (p.vy > 0 && p.y < e.y - 4)) {
+            e.alive = false; e.squished = true; e.squishTimer = 24;
+            if (p.starTimer === 0) p.vy = -11.5;
+            sound.playHit(1.6); createSparks(e.x, e.y, '#c084fc', 14);
+            awardMarioScore(pNum, 1, '+1!', e.x, e.y);
+          } else {
+            hurtPlayer(p, pNum, false);
+          }
+        }
+      });
+    } else if (e.type === 'koopa') {
+      if (e.shellGrace > 0) e.shellGrace--;
+      if (e.inShell) {
+        if (e.shellSpeed !== 0) {
+          e.x += e.shellSpeed;
+          if (e.x <= e.minX || e.x >= e.maxX) {
+            e.shellSpeed = -e.shellSpeed;
+            sound.playWallBounce();
+          }
+          marioWorld.enemies.forEach(other => {
+            if (other !== e && other.alive && other.type !== 'piranha' && Math.abs(other.x - e.x) < 26) {
+              other.alive = false;
+              sound.playHit(1.5);
+              createSparks(other.x, other.y, '#10b981', 12);
+              awardMarioScore(e.kicker || 1, 1, 'КОМБО +1!', other.x, other.y);
+            }
+          });
+        }
+      } else {
+        e.x += e.vx;
+        if (e.x <= e.minX) { e.x = e.minX; e.vx = Math.abs(e.vx); }
+        else if (e.x >= e.maxX) { e.x = e.maxX; e.vx = -Math.abs(e.vx); }
+      }
+      [[p1Runner, 1], [p2Runner, 2]].forEach(([p, pNum]) => {
+        if (p.respawnTimer > 0) return;
+        if (Math.abs(p.x - e.x) < 25 && Math.abs(p.y - e.y) < 28) {
+          if (p.starTimer > 0) {
+            e.alive = false; sound.playHit(1.7); createSparks(e.x, e.y, '#16a34a', 14);
+            awardMarioScore(pNum, 1, '+1!', e.x, e.y);
+          } else if (p.vy > 0 && p.y < e.y - 4) {
+            if (!e.inShell) {
+              e.inShell = true; e.shellSpeed = 0; e.shellGrace = 12;
+              p.vy = -11; sound.playHit(1.5);
+              awardMarioScore(pNum, 1, 'ПАНЦИР +1!', e.x, e.y);
+            } else {
+              e.shellSpeed = p.x < e.x ? 8 : -8;
+              e.kicker = pNum; e.shellGrace = 14;
+              p.vy = -9.5; sound.playHit(1.8);
+            }
+          } else if (e.inShell && e.shellSpeed === 0) {
+            e.shellSpeed = p.x < e.x ? 8 : -8;
+            e.kicker = pNum; e.shellGrace = 14;
+            sound.playHit(1.5);
+          } else if (e.shellGrace === 0) {
+            hurtPlayer(p, pNum, false);
+          }
+        }
+      });
+    } else if (e.type === 'piranha') {
+      const playerOnPipe =
+        (Math.abs(p1Runner.x - e.x) < 34 && p1Runner.y < e.pipeY) ||
+        (Math.abs(p2Runner.x - e.x) < 34 && p2Runner.y < e.pipeY);
+      if (e.offset === 0 && playerOnPipe) {
+        e.timer = 0;
+      } else {
+        e.timer++;
+        // Плавна синусоїда виходу з труби
+        const cycle = (e.timer % 180) / 180;
+        if (cycle < 0.5) e.offset = 0;
+        else {
+          const pPhase = (cycle - 0.5) * 2;
+          e.offset = -Math.sin(pPhase * Math.PI) * 34;
+        }
+      }
+      if (e.offset < -8) {
+        [[p1Runner, 1], [p2Runner, 2]].forEach(([p, pNum]) => {
+          if (p.respawnTimer > 0) return;
+          if (Math.abs(p.x - e.x) < 22 && Math.abs(p.y - (e.y + e.offset)) < 24) {
+            if (p.starTimer > 0) {
+              e.alive = false; sound.playHit(1.6); createSparks(e.x, e.y + e.offset, '#ef4444', 14);
+              awardMarioScore(pNum, 1, '+1!', e.x, e.y + e.offset);
+            } else {
+              hurtPlayer(p, pNum, false);
+            }
+          }
+        });
+      }
+    }
+  });
+  // Монети (окремий збір для Г1 і Г2 щоб обидва мали рівні умови!)
+  marioWorld.coins.forEach(c => {
+    if (!c.gotP1 && p1Runner.respawnTimer === 0 && Math.hypot(p1Runner.x - c.x, p1Runner.y - c.y) < 28) {
+      c.gotP1 = true; p1Runner.coins++; totalHits++; sound.playCoin();
+      if (p1Runner.coins % 3 === 0) {
+        awardMarioScore(1, 1, '+1 ★', c.x, c.y);
+      } else {
+        addFloatingText(c.x, c.y, '+1 🪙', '#facc15', 1);
+        updateScoreDOM();
+      }
+    }
+    if (!c.gotP2 && p2Runner.respawnTimer === 0 && Math.hypot(p2Runner.x - c.x, p2Runner.y - c.y) < 28) {
+      c.gotP2 = true; p2Runner.coins++; totalHits++; sound.playCoin();
+      if (p2Runner.coins % 3 === 0) {
+        awardMarioScore(2, 1, '+1 ★', c.x, c.y);
+      } else {
+        addFloatingText(c.x, c.y, '+1 🪙', '#facc15', 2);
+        updateScoreDOM();
+      }
+    }
+  });
+  // Флагшток фінішу
+  // Флагшток фінішу
+  if (!marioWorld.flagReached && (p1Runner.x >= marioWorld.flagX || p2Runner.x >= marioWorld.flagX)) {
+    const winner = p1Runner.x >= marioWorld.flagX ? 1 : 2;
+    marioWorld.flagReached = true;
+    sound.playGoal();
+    if (winner === 1) p1Score += 5; else p2Score += 5;
+    totalHits++;
+    updateScoreDOM();
+    if (p1Score >= targetScore || p2Score >= targetScore) {
+      endGame(p1Score >= targetScore ? 1 : 2);
+      return;
+    }
+    const splash = document.getElementById('goal-splash');
+    marioWorld.level++;
+    splash.innerText = `ФІНІШ Г${winner}! +5 • РІВЕНЬ ${marioWorld.level}`;
+    splash.className = (winner === 1 ? 'p1-color' : 'p2-color') + ' active';
+    gameState = 'POINT_PAUSE';
+    clearTimeout(pointTimeoutId);
+    pointTimeoutId = setTimeout(() => {
+      pointTimeoutId = null;
+      splash.classList.remove('active');
+      initMarioWorld(true);
+      updateScoreDOM();
+      gameState = 'PLAYING';
+    }, 2000);
+    return;
+  }
+  p1Hits = p1Runner.coins;
+  p2Hits = p2Runner.coins;
+  const maxDist = Math.floor(Math.max(p1Runner.x, p2Runner.x) / 10);
+  document.getElementById('stat-rally').innerText = maxDist + 'м';
+  updateScoreDOM();
+}
+function triggerPoint(scorer) {
+  gameState = 'POINT_PAUSE';
+  sound.playGoal();
+  rallyHits = 0;
+  document.getElementById('stat-rally').innerText = '0';
+  if (scorer === 1) p1Score++; else p2Score++;
+  updateScoreDOM();
+  const splash = document.getElementById('goal-splash');
+  splash.innerText = currentMode === 'HOCKEY' ? `ГОЛ! ГРАВЕЦЬ ${scorer}` : `ВЛУЧАННЯ! Г${scorer}`;
+  splash.className = (scorer === 1 ? 'p1-color' : 'p2-color') + ' active';
+  clearTimeout(pointTimeoutId);
+  pointTimeoutId = setTimeout(() => {
+    pointTimeoutId = null;
+    splash.classList.remove('active');
+    if (p1Score >= targetScore || p2Score >= targetScore) {
+      endGame(p1Score >= targetScore ? 1 : 2);
+    } else {
+      if (currentMode === 'HOCKEY') {
+        resetPuck(scorer === 1 ? 2 : 1);
+      } else {
+        lasers = [];
+        alienShots = [];
+      }
+      gameState = 'PLAYING';
+    }
+  }, 1350);
+}
+function resetPuck(targetP) {
+  puck.x = V_WIDTH / 2;
+  if (targetP === 0) puck.y = V_HEIGHT / 2;
+  else puck.y = targetP === 1 ? V_HEIGHT / 2 + 150 : V_HEIGHT / 2 - 150;
+  puck.vx = 0;
+  puck.vy = 0;
+  puckTrail = [];
+}
+function endGame(winner) {
+  clearPendingPointTimeout();
+  gameState = 'OVER';
+  const heading = document.getElementById('modal-heading');
+  const desc = document.getElementById('modal-desc');
+  heading.innerText = `ПЕРЕМІГ ГРАВЕЦЬ ${winner}!`;
+  heading.className = `modal-title ${winner === 1 ? 'p1-color' : 'p2-color'}`;
+  desc.innerText = `Рахунок матчу: ${p1Score} — ${p2Score} • Усього дій: ${totalHits}`;
+  document.getElementById('btn-play-resume').innerText = 'Зіграти ще раз';
+  document.getElementById('menu-modal').classList.add('active');
+}
+function updateScoreDOM() {
+  const theme = getThemeColors();
+  document.getElementById('p1-score').innerText = p1Score;
+  document.getElementById('p2-score').innerText = p2Score;
+  if (currentMode === 'MARIO') {
+    const heart = theme.isBW ? '♥' : '❤️';
+    const coin = theme.isBW ? '◉' : '🪙';
+    document.getElementById('p1-hits').innerText = `${heart}${p1Runner.lives} ${coin}${p1Runner.coins}`;
+    document.getElementById('p2-hits').innerText = `${heart}${p2Runner.lives} ${coin}${p2Runner.coins}`;
+  } else if (currentMode === 'INVADERS' && invadersShape === 'coop') {
+    const sh = theme.isBW ? '◈' : '🛡️';
+    document.getElementById('p1-hits').innerText = `${p1Hits} • ${sh}${ship1.shields}`;
+    document.getElementById('p2-hits').innerText = `${p2Hits} • ${sh}${ship2.shields}`;
+  } else {
+    document.getElementById('p1-hits').innerText = p1Hits;
+    document.getElementById('p2-hits').innerText = p2Hits;
+  }
+  if (currentMode !== 'MARIO') {
+    document.getElementById('stat-rally').innerText = rallyHits;
+  }
+  document.getElementById('stat-total-hits').innerText = totalHits;
+}
+/**
+ * ВІДМАЛЬОВКА ВСІХ 4 ІГОР (БАРВИСТА + СТРОГІ Ч/Б ТЕМИ)
+ */
+function drawHockeyField() {
+  const theme = getThemeColors();
+  const gL = (V_WIDTH - GOAL_WIDTH) / 2;
+  const gR = (V_WIDTH + GOAL_WIDTH) / 2;
+  if (theme.isBW) {
+    ctx.save();
+    ctx.fillStyle = theme.surface;
+    ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+    // Центральна лінія та коло
+    ctx.strokeStyle = theme.fg;
+    ctx.lineWidth = 3;
+    ctx.setLineDash([10, 10]);
+    ctx.beginPath(); ctx.moveTo(BORDER, V_HEIGHT / 2); ctx.lineTo(V_WIDTH - BORDER, V_HEIGHT / 2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(V_WIDTH / 2, V_HEIGHT / 2, 105, 0, Math.PI * 2); ctx.stroke();
+    // Дуги воріт
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(V_WIDTH / 2, BORDER, 170, 0, Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.arc(V_WIDTH / 2, V_HEIGHT - BORDER, 170, Math.PI, 0); ctx.stroke();
+    // Борти з відкритими воротами
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = theme.fg;
+    ctx.beginPath();
+    ctx.moveTo(gL, BORDER); ctx.lineTo(BORDER, BORDER); ctx.lineTo(BORDER, V_HEIGHT - BORDER); ctx.lineTo(gL, V_HEIGHT - BORDER);
+    ctx.moveTo(gR, BORDER); ctx.lineTo(V_WIDTH - BORDER, BORDER); ctx.lineTo(V_WIDTH - BORDER, V_HEIGHT - BORDER); ctx.lineTo(gR, V_HEIGHT - BORDER);
+    ctx.stroke();
+    // Пунктирні лінії воріт
+    ctx.lineWidth = 3;
+    ctx.setLineDash([8, 8]);
+    ctx.beginPath();
+    ctx.moveTo(gL, BORDER); ctx.lineTo(gR, BORDER);
+    ctx.moveTo(gL, V_HEIGHT - BORDER); ctx.lineTo(gR, V_HEIGHT - BORDER);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Стійки воріт
+    ctx.fillStyle = theme.fg;
+    [[gL, BORDER], [gR, BORDER], [gL, V_HEIGHT - BORDER], [gR, V_HEIGHT - BORDER]].forEach(([px, py]) => {
+      ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2); ctx.fill();
+    });
+    // Шлейф шайби
+    for (let i = 0; i < puckTrail.length; i++) {
+      const pt = puckTrail[i];
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, puck.radius * (1 - i * 0.1), 0, Math.PI * 2);
+      ctx.strokeStyle = theme.fg;
+      ctx.globalAlpha = Math.max(0.1, (1 - i / puckTrail.length) * 0.35);
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    // Шайба (контрастна з внутрішнім кільцем)
+    ctx.beginPath(); ctx.arc(puck.x, puck.y, puck.radius, 0, Math.PI * 2);
+    ctx.fillStyle = theme.fg; ctx.fill();
+    ctx.beginPath(); ctx.arc(puck.x, puck.y, puck.radius * 0.55, 0, Math.PI * 2);
+    ctx.strokeStyle = theme.surface; ctx.lineWidth = 3; ctx.stroke();
+    // Биток Г1 (суцільний з внутрішнім кільцем)
+    ctx.beginPath(); ctx.arc(mallet1.x, mallet1.y, mallet1.radius, 0, Math.PI * 2);
+    ctx.fillStyle = theme.fg; ctx.fill();
+    ctx.beginPath(); ctx.arc(mallet1.x, mallet1.y, mallet1.radius * 0.58, 0, Math.PI * 2);
+    ctx.strokeStyle = theme.surface; ctx.lineWidth = 4; ctx.stroke();
+    ctx.beginPath(); ctx.arc(mallet1.x, mallet1.y, mallet1.radius * 0.25, 0, Math.PI * 2);
+    ctx.fillStyle = theme.surface; ctx.fill();
+    // Биток Г2 (порожнистий контурний щоб чітко відрізнявся!)
+    ctx.beginPath(); ctx.arc(mallet2.x, mallet2.y, mallet2.radius, 0, Math.PI * 2);
+    ctx.fillStyle = theme.surface; ctx.fill();
+    ctx.lineWidth = 6; ctx.strokeStyle = theme.fg; ctx.stroke();
+    ctx.beginPath(); ctx.arc(mallet2.x, mallet2.y, mallet2.radius * 0.55, 0, Math.PI * 2);
+    ctx.lineWidth = 3; ctx.stroke();
+    ctx.beginPath(); ctx.arc(mallet2.x, mallet2.y, mallet2.radius * 0.22, 0, Math.PI * 2);
+    ctx.fillStyle = theme.fg; ctx.fill();
+    ctx.restore();
+    return;
+  }
+  // ПОВНОЦІННИЙ РЕАЛІСТИЧНИЙ ХОКЕЙ
+  ctx.save();
+  ctx.fillStyle = '#0b1329';
+  ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.025)';
+  for (let x = BORDER + 20; x < V_WIDTH - BORDER; x += 45) {
+    for (let y = BORDER + 20; y < V_HEIGHT - BORDER; y += 45) {
+      ctx.beginPath(); ctx.arc(x, y, 1.8, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)'; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(BORDER, V_HEIGHT / 2); ctx.lineTo(V_WIDTH - BORDER, V_HEIGHT / 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(V_WIDTH / 2, V_HEIGHT / 2, 110, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255, 0, 85, 0.35)'; ctx.beginPath(); ctx.arc(V_WIDTH / 2, BORDER, 180, 0, Math.PI); ctx.stroke();
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.35)'; ctx.beginPath(); ctx.arc(V_WIDTH / 2, V_HEIGHT - BORDER, 180, Math.PI, 0); ctx.stroke();
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(0, 0, BORDER, V_HEIGHT); ctx.fillRect(V_WIDTH - BORDER, 0, BORDER, V_HEIGHT);
+  ctx.fillRect(0, 0, gL, BORDER); ctx.fillRect(gR, 0, V_WIDTH - gR, BORDER);
+  ctx.fillRect(0, V_HEIGHT - BORDER, gL, BORDER); ctx.fillRect(gR, V_HEIGHT - BORDER, V_WIDTH - gR, BORDER);
+  ctx.strokeStyle = 'rgba(255, 0, 85, 0.9)'; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.moveTo(gL, BORDER); ctx.lineTo(gR, BORDER); ctx.stroke();
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.9)';
+  ctx.beginPath(); ctx.moveTo(gL, V_HEIGHT - BORDER); ctx.lineTo(gR, V_HEIGHT - BORDER); ctx.stroke();
+  for (let i = 0; i < puckTrail.length; i++) {
+    const pt = puckTrail[i];
+    ctx.beginPath(); ctx.arc(pt.x, pt.y, puck.radius * (1 - i * 0.08), 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(250, 204, 21, ${pt.alpha * 0.35})`; ctx.fill();
+  }
+  const grad = ctx.createRadialGradient(puck.x - 4, puck.y - 5, 2, puck.x, puck.y, puck.radius);
+  grad.addColorStop(0, '#fffbeb'); grad.addColorStop(0.3, '#facc15'); grad.addColorStop(0.85, '#ca8a04'); grad.addColorStop(1, '#713f12');
+  ctx.beginPath(); ctx.arc(puck.x, puck.y, puck.radius, 0, Math.PI * 2); ctx.fillStyle = grad; ctx.fill();
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(puck.x, puck.y, puck.radius * 0.65, 0, Math.PI * 2); ctx.stroke();
+  const drawMallet = (m, col) => {
+    ctx.beginPath(); ctx.arc(m.x, m.y, m.radius, 0, Math.PI * 2); ctx.fillStyle = '#0f172a'; ctx.fill();
+    ctx.lineWidth = 5; ctx.strokeStyle = col; ctx.stroke();
+    const mg = ctx.createRadialGradient(m.x - 6, m.y - 8, 4, m.x, m.y, m.radius * 0.65);
+    mg.addColorStop(0, '#ffffff'); mg.addColorStop(0.35, col); mg.addColorStop(1, '#020617');
+    ctx.beginPath(); ctx.arc(m.x, m.y, m.radius * 0.62, 0, Math.PI * 2); ctx.fillStyle = mg; ctx.fill();
+  };
+  drawMallet(mallet1, '#00f0ff');
+  drawMallet(mallet2, '#ff0055');
+  ctx.restore();
+}
+function drawInvadersField() {
+  const theme = getThemeColors();
+  const now = performance.now();
+  ctx.fillStyle = theme.surface;
+  ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+  stars.forEach(st => {
+    ctx.fillStyle = theme.isBW
+      ? theme.fg
+      : 'rgba(255, 255, 255, 0.35)';
+    if (theme.isBW) ctx.globalAlpha = 0.25;
+    ctx.fillRect(st.x, st.y, st.radius, st.radius);
+  });
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = theme.border;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([8, 8]);
+  ctx.beginPath(); ctx.moveTo(BORDER, V_HEIGHT / 2); ctx.lineTo(V_WIDTH - BORDER, V_HEIGHT / 2); ctx.stroke();
+  ctx.setLineDash([]);
+  // Бункери
+  ctx.fillStyle = theme.accent;
+  bunkers.forEach(blocks => {
+    blocks.forEach(b => {
+      if (b.hp > 0) ctx.fillRect(b.x, b.y, b.w - 1.5, b.h - 1.5);
+    });
+  });
+  // Прибульці
+  if (invadersShape === 'coop') {
+    aliens.forEach(a => {
+      if (!a.alive) return;
+      ctx.fillStyle = theme.isBW ? theme.fg : a.color;
+      const x = a.x, y = a.y;
+      ctx.fillRect(x - 14, y - 8, 28, 14);
+      ctx.fillRect(x - 18, y - 4, 36, 8);
+      ctx.fillRect(x - 10, y - 12, 6, 4);
+      ctx.fillRect(x + 4, y - 12, 6, 4);
+      ctx.fillRect(x - 14, y + 6, 6, 6);
+      ctx.fillRect(x + 8, y + 6, 6, 6);
+      ctx.fillStyle = theme.surface;
+      ctx.fillRect(x - 8, y - 4, 4, 4);
+      ctx.fillRect(x + 4, y - 4, 4, 4);
+    });
+  }
+  // Постріли прибульців
+  alienShots.forEach(as => {
+    ctx.fillStyle = theme.isBW ? theme.fg : '#22c55e';
+    ctx.beginPath();
+    ctx.moveTo(as.x, as.y - 9);
+    ctx.lineTo(as.x + 6, as.y);
+    ctx.lineTo(as.x, as.y + 9);
+    ctx.lineTo(as.x - 6, as.y);
+    ctx.closePath();
+    ctx.fill();
+  });
+  // Лазери гравців
+  lasers.forEach(l => {
+    if (theme.isBW && l.from === 2) {
+      ctx.fillStyle = theme.surface;
+      ctx.strokeStyle = theme.fg;
+      ctx.lineWidth = 2;
+      ctx.fillRect(l.x - 3, l.y - 12, 6, 24);
+      ctx.strokeRect(l.x - 3, l.y - 12, 6, 24);
+    } else {
+      ctx.fillStyle = l.color;
+      ctx.fillRect(l.x - 2.5, l.y - 12, 5, 24);
+    }
+  });
+  // НЛО
+  if (ufo.active) {
+    ctx.fillStyle = theme.accent;
+    ctx.beginPath(); ctx.ellipse(ufo.x, ufo.y, 28, 12, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = theme.surface;
+    ctx.fillRect(ufo.x - 14, ufo.y - 2, 6, 4);
+    ctx.fillRect(ufo.x - 3, ufo.y - 2, 6, 4);
+    ctx.fillRect(ufo.x + 8, ufo.y - 2, 6, 4);
+  }
+  // Корабель Г1
+  if (ship1.invuln === 0 || Math.floor(ship1.invuln / 5) % 2 === 0) {
+    ctx.fillStyle = theme.p1;
+    ctx.fillRect(ship1.x - 28, ship1.y, 56, 14);
+    ctx.fillRect(ship1.x - 14, ship1.y - 8, 28, 8);
+    ctx.fillRect(ship1.x - 4, ship1.y - 18, 8, 10);
+    if (now < ship1.rapidUntil) {
+      ctx.strokeStyle = theme.accent; ctx.lineWidth = 2;
+      ctx.strokeRect(ship1.x - 33, ship1.y - 22, 66, 40);
+    }
+  }
+  // Корабель Г2
+  if (ship2.invuln === 0 || Math.floor(ship2.invuln / 5) % 2 === 0) {
+    if (theme.p2Outline) {
+      ctx.fillStyle = theme.surface;
+      ctx.strokeStyle = theme.p2;
+      ctx.lineWidth = 3;
+      ctx.fillRect(ship2.x - 28, ship2.y - 14, 56, 14);
+      ctx.strokeRect(ship2.x - 28, ship2.y - 14, 56, 14);
+      ctx.fillRect(ship2.x - 14, ship2.y, 28, 8);
+      ctx.strokeRect(ship2.x - 14, ship2.y, 28, 8);
+      ctx.fillRect(ship2.x - 4, ship2.y + 8, 8, 10);
+      ctx.strokeRect(ship2.x - 4, ship2.y + 8, 8, 10);
+    } else {
+      ctx.fillStyle = theme.p2;
+      ctx.fillRect(ship2.x - 28, ship2.y - 14, 56, 14);
+      ctx.fillRect(ship2.x - 14, ship2.y, 28, 8);
+      ctx.fillRect(ship2.x - 4, ship2.y + 8, 8, 10);
+    }
+    if (now < ship2.rapidUntil) {
+      ctx.strokeStyle = theme.accent; ctx.lineWidth = 2;
+      ctx.strokeRect(ship2.x - 33, ship2.y - 18, 66, 40);
+    }
+  }
+}
+function drawSnakeField() {
+  const theme = getThemeColors();
+  ctx.fillStyle = theme.surface;
+  ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = snakeWallMode === 'deadly' ? (theme.isBW ? theme.fg : '#ef4444') : theme.border;
+  if (snakeWallMode === 'looped') ctx.setLineDash([10, 10]);
+  ctx.strokeRect(BORDER, BORDER, V_WIDTH - BORDER * 2, V_HEIGHT - BORDER * 2);
+  ctx.setLineDash([]);
+  // Їжа
+  snakeFoods.forEach(f => {
+    ctx.fillStyle = theme.accent;
+    if (snakeStyleMode === 'pixel') {
+      const fx = ARENA_X + f.gx * GRID_SIZE + 3;
+      const fy = ARENA_Y + f.gy * GRID_SIZE + 3;
+      ctx.fillRect(fx, fy, GRID_SIZE - 6, GRID_SIZE - 6);
+      if (theme.isBW) {
+        ctx.fillStyle = theme.surface;
+        ctx.fillRect(fx + 8, fy + 8, GRID_SIZE - 22, GRID_SIZE - 22);
+      }
+    } else {
+      ctx.beginPath(); ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2); ctx.fill();
+      if (theme.isBW) {
+        ctx.fillStyle = theme.surface;
+        ctx.beginPath(); ctx.arc(f.x, f.y, 4, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+  });
+  if (snakeStyleMode === 'pixel') {
+    const drawP = (s, col, isOutline) => {
+      s.body.forEach((seg, idx) => {
+        const sx = ARENA_X + seg.x * GRID_SIZE + 2;
+        const sy = ARENA_Y + seg.y * GRID_SIZE + 2;
+        const sz = GRID_SIZE - 4;
+        if (isOutline) {
+          ctx.fillStyle = theme.surface;
+          ctx.fillRect(sx, sy, sz, sz);
+          ctx.strokeStyle = col;
+          ctx.lineWidth = idx === 0 ? 4 : 2.5;
+          ctx.strokeRect(sx, sy, sz, sz);
+          if (idx === 0) {
+            ctx.fillStyle = col;
+            ctx.fillRect(sx + 9, sy + 9, 8, 8);
+          }
+        } else {
+          ctx.fillStyle = idx === 0 ? theme.text : col;
+          ctx.fillRect(sx, sy, sz, sz);
+          if (idx === 0) {
+            ctx.fillStyle = theme.surface;
+            ctx.fillRect(sx + 6, sy + 6, 4, 4);
+            ctx.fillRect(sx + sz - 10, sy + 6, 4, 4);
+          }
+        }
+      });
+    };
+    drawP(snake1, theme.p1, false);
+    drawP(snake2, theme.p2, theme.p2Outline);
+  } else {
+    const drawF = (s, col, isOutline) => {
+      if (s.body.length < 2) return;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      const tracePath = () => {
+        ctx.beginPath();
+        ctx.moveTo(s.body[s.body.length - 1].x, s.body[s.body.length - 1].y);
+        for (let i = s.body.length - 2; i >= 0; i--) {
+          const prev = s.body[i + 1], curr = s.body[i];
+          if (Math.hypot(curr.x - prev.x, curr.y - prev.y) > 40) {
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(curr.x, curr.y);
+          } else {
+            ctx.lineTo(curr.x, curr.y);
+          }
+        }
+        ctx.stroke();
+      };
+      if (isOutline) {
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 20;
+        tracePath();
+        ctx.strokeStyle = theme.surface;
+        ctx.lineWidth = 12;
+        tracePath();
+        ctx.fillStyle = theme.surface;
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 3.5;
+        ctx.beginPath(); ctx.arc(s.body[0].x, s.body[0].y, 11, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      } else {
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 20;
+        tracePath();
+        ctx.fillStyle = theme.text;
+        ctx.beginPath(); ctx.arc(s.body[0].x, s.body[0].y, 11, 0, Math.PI * 2); ctx.fill();
+      }
+      // Напрямок очей голови
+      const head = s.body[0];
+      const ex = Math.cos(s.angle) * 5;
+      const ey = Math.sin(s.angle) * 5;
+      ctx.fillStyle = isOutline ? col : theme.surface;
+      ctx.beginPath(); ctx.arc(head.x + ex - ey * 0.6, head.y + ey + ex * 0.6, 2.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(head.x + ex + ey * 0.6, head.y + ey - ex * 0.6, 2.5, 0, Math.PI * 2); ctx.fill();
+    };
+    drawF(snake1, theme.p1, false);
+    drawF(snake2, theme.p2, theme.p2Outline);
+    // Візуальний джойстик при натисканні
+    [touchInput.p1, touchInput.p2].forEach(inp => {
+      if (!inp.active) return;
+      ctx.save();
+      ctx.strokeStyle = theme.isBW ? theme.fg : 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(inp.sx, inp.sy, 42, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(inp.cx, inp.cy, 14, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    });
+  }
+}
+function drawMarioViewport(camX, viewPlayerNum) {
+  const theme = getThemeColors();
+  ctx.save();
+  ctx.translate(-camX, 0);
+  // Небо (зміна атмосфери залежно від рівня у барвистому режимі)
+  let skyCol = theme.sky;
+  if (!theme.isBW) {
+    if (marioWorld.level % 3 === 2) skyCol = '#312e81';
+    else if (marioWorld.level % 3 === 0) skyCol = '#0f172a';
+  }
+  ctx.fillStyle = skyCol;
+  ctx.fillRect(camX, 0, V_WIDTH, 680);
+  // Хмари та кущі
+  marioWorld.scenery.forEach(sc => {
+    if (sc.x + 120 < camX || sc.x > camX + V_WIDTH) return;
+    if (sc.type === 'cloud') {
+      ctx.beginPath();
+      ctx.arc(sc.x, sc.y, 20, 0, Math.PI * 2);
+      ctx.arc(sc.x + 22, sc.y - 10, 26, 0, Math.PI * 2);
+      ctx.arc(sc.x + 46, sc.y, 20, 0, Math.PI * 2);
+      if (theme.isBW) {
+        ctx.fillStyle = theme.surface; ctx.fill();
+        ctx.strokeStyle = theme.fg; ctx.lineWidth = 2; ctx.stroke();
+      } else {
+        ctx.fillStyle = '#ffffff'; ctx.fill();
+      }
+    } else if (sc.type === 'bush') {
+      ctx.beginPath();
+      ctx.arc(sc.x, sc.y, 18, 0, Math.PI * 2);
+      ctx.arc(sc.x + 20, sc.y - 8, 22, 0, Math.PI * 2);
+      ctx.arc(sc.x + 40, sc.y, 18, 0, Math.PI * 2);
+      if (theme.isBW) {
+        ctx.fillStyle = theme.surface; ctx.fill();
+        ctx.strokeStyle = theme.fg; ctx.lineWidth = 2; ctx.stroke();
+      } else {
+        ctx.fillStyle = '#00a800'; ctx.fill();
+      }
+    }
+  });
+  // Рослини-піраньї малюються ПЕРЕД трубами щоб ховатися всередині!
+  marioWorld.enemies.forEach(e => {
+    if (e.type !== 'piranha' || !e.alive || e.offset >= -2) return;
+    if (e.x < camX - 40 || e.x > camX + V_WIDTH + 40) return;
+    const py = e.y + e.offset;
+    ctx.fillStyle = theme.isBW ? theme.fg : '#ef4444';
+    ctx.beginPath(); ctx.arc(e.x, py, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = theme.isBW ? theme.surface : '#ffffff';
+    ctx.fillRect(e.x - 8, py - 4, 16, 6);
+    ctx.fillStyle = theme.isBW ? theme.fg : '#00a800';
+    ctx.fillRect(e.x - 4, py + 12, 8, Math.max(0, e.pipeY - py - 10));
+  });
+  // Блоки
+  marioWorld.blocks.forEach(b => {
+    if (b.x + b.w < camX || b.x > camX + V_WIDTH) return;
+    if (b.type === 'brick' && (viewPlayerNum === 1 ? b.brokenP1 : b.brokenP2)) return;
+    const bump = viewPlayerNum === 1 ? (b.bumpP1 || 0) : (b.bumpP2 || 0);
+    if (b.type === 'ground') {
+      if (theme.isBW) {
+        ctx.fillStyle = theme.surface; ctx.fillRect(b.x, b.y, b.w, b.h);
+        ctx.fillStyle = theme.fg; ctx.fillRect(b.x, b.y, b.w, 12);
+        ctx.strokeStyle = theme.fg; ctx.lineWidth = 2; ctx.strokeRect(b.x, b.y, b.w, b.h);
+      } else {
+        ctx.fillStyle = '#00a800'; ctx.fillRect(b.x, b.y, b.w, 16);
+        ctx.fillStyle = '#c84c0c'; ctx.fillRect(b.x, b.y + 16, b.w, b.h - 16);
+        ctx.strokeStyle = '#000000'; ctx.lineWidth = 1.5;
+        for (let bx = b.x; bx < b.x + b.w; bx += 32) ctx.strokeRect(bx, b.y + 16, 32, 32);
+      }
+    } else if (b.type === 'qblock') {
+      const used = viewPlayerNum === 1 ? b.usedP1 : b.usedP2;
+      const by = b.y - bump;
+      if (theme.isBW) {
+        ctx.fillStyle = used ? theme.surface : theme.fg;
+        ctx.fillRect(b.x, by, b.w, b.h);
+        ctx.strokeStyle = theme.fg; ctx.lineWidth = 2.5;
+        ctx.strokeRect(b.x, by, b.w, b.h);
+        if (!used) {
+          ctx.fillStyle = theme.surface;
+          ctx.font = 'bold 22px sans-serif';
+          ctx.fillText('?', b.x + 13, by + 27);
+        }
+      } else {
+        ctx.fillStyle = used ? '#8c5828' : theme.qblock;
+        ctx.fillRect(b.x, by, b.w, b.h);
+        ctx.strokeStyle = '#000000'; ctx.lineWidth = 2; ctx.strokeRect(b.x, by, b.w, b.h);
+        if (!used) {
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 22px sans-serif';
+          ctx.fillText('?', b.x + 13, by + 27);
+        }
+      }
+    } else if (b.type === 'brick') {
+      const by = b.y - bump;
+      ctx.fillStyle = theme.isBW ? theme.surface : '#c84c0c';
+      ctx.fillRect(b.x, by, b.w, b.h);
+      ctx.strokeStyle = theme.isBW ? theme.fg : '#000000';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(b.x, by, b.w, b.h);
+      ctx.beginPath();
+      ctx.moveTo(b.x, by + b.h / 2); ctx.lineTo(b.x + b.w, by + b.h / 2);
+      ctx.moveTo(b.x + b.w / 2, by); ctx.lineTo(b.x + b.w / 2, by + b.h / 2);
+      ctx.stroke();
+    } else if (b.type === 'pipe') {
+      if (theme.isBW) {
+        ctx.fillStyle = theme.surface; ctx.fillRect(b.x, b.y, b.w, b.h);
+        ctx.fillStyle = theme.surface; ctx.fillRect(b.x - 4, b.y, b.w + 8, 22);
+        ctx.strokeStyle = theme.fg; ctx.lineWidth = 3;
+        ctx.strokeRect(b.x, b.y, b.w, b.h);
+        ctx.strokeRect(b.x - 4, b.y, b.w + 8, 22);
+        ctx.fillStyle = theme.fg; ctx.fillRect(b.x + 8, b.y + 24, 6, b.h - 26);
+      } else {
+        ctx.fillStyle = theme.pipe;
+        ctx.fillRect(b.x, b.y, b.w, b.h);
+        ctx.fillRect(b.x - 4, b.y, b.w + 8, 22);
+        ctx.strokeStyle = '#000000'; ctx.lineWidth = 2;
+        ctx.strokeRect(b.x, b.y, b.w, b.h); ctx.strokeRect(b.x - 4, b.y, b.w + 8, 22);
+      }
+    } else if (b.type === 'step') {
+      ctx.fillStyle = theme.isBW ? theme.surface : '#d88b28';
+      ctx.fillRect(b.x, b.y, b.w, b.h);
+      ctx.strokeStyle = theme.isBW ? theme.fg : '#000000';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(b.x, b.y, b.w, b.h);
+    }
+  });
+  // Флагшток та замок фінішу
+  if (marioWorld.flagX + 260 >= camX && marioWorld.flagX - 60 <= camX + V_WIDTH) {
+    ctx.fillStyle = theme.isBW ? theme.fg : '#00a800';
+    ctx.fillRect(marioWorld.flagX, 185, 8, 380);
+    ctx.fillStyle = theme.isBW ? theme.fg : '#facc15';
+    ctx.beginPath(); ctx.arc(marioWorld.flagX + 4, 185, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = theme.isBW ? theme.fg : '#ef4444';
+    ctx.beginPath();
+    ctx.moveTo(marioWorld.flagX - 42, 208); ctx.lineTo(marioWorld.flagX, 228); ctx.lineTo(marioWorld.flagX, 190);
+    ctx.closePath(); ctx.fill();
+    // Замок за флагштоком
+    const cx = marioWorld.flagX + 95;
+    ctx.fillStyle = theme.isBW ? theme.surface : '#b45309';
+    ctx.fillRect(cx, 445, 110, 120);
+    ctx.fillRect(cx + 25, 400, 60, 45);
+    if (theme.isBW) {
+      ctx.strokeStyle = theme.fg; ctx.lineWidth = 3;
+      ctx.strokeRect(cx, 445, 110, 120);
+      ctx.strokeRect(cx + 25, 400, 60, 45);
+    }
+    ctx.fillStyle = theme.isBW ? theme.fg : '#111827';
+    ctx.beginPath(); ctx.arc(cx + 55, 530, 18, Math.PI, 0); ctx.fill();
+    ctx.fillRect(cx + 37, 530, 36, 35);
+  }
+  // Монети та вилітаючі монети з ?-блоків
+  marioWorld.coins.forEach(c => {
+    const got = viewPlayerNum === 1 ? c.gotP1 : c.gotP2;
+    if (!got && c.x >= camX - 20 && c.x <= camX + V_WIDTH + 20) {
+      ctx.fillStyle = theme.isBW ? theme.fg : theme.accent;
+      ctx.beginPath(); ctx.ellipse(c.x, c.y, 8, 12, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = theme.surface;
+      ctx.fillRect(c.x - 1.5, c.y - 6, 3, 12);
+    }
+  });
+  marioWorld.popCoins.forEach(pc => {
+    if (pc.owner !== viewPlayerNum) return;
+    ctx.fillStyle = theme.isBW ? theme.fg : theme.accent;
+    ctx.beginPath(); ctx.ellipse(pc.x, pc.y, 7, 11, 0, 0, Math.PI * 2); ctx.fill();
+  });
+  // Бонуси (Гриб та Зірочка)
+  marioWorld.powerups.forEach(pu => {
+    if (!pu.active || pu.owner !== viewPlayerNum) return;
+    if (pu.type === 'mushroom') {
+      ctx.fillStyle = theme.isBW ? theme.fg : '#ef4444';
+      ctx.beginPath(); ctx.arc(pu.x, pu.y - 2, 13, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = theme.surface;
+      ctx.beginPath(); ctx.arc(pu.x - 5, pu.y - 7, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(pu.x + 5, pu.y - 7, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = theme.isBW ? theme.surface : '#fde68a';
+      ctx.fillRect(pu.x - 8, pu.y - 2, 16, 13);
+      if (theme.isBW) {
+        ctx.strokeStyle = theme.fg; ctx.lineWidth = 2;
+        ctx.strokeRect(pu.x - 8, pu.y - 2, 16, 13);
+      }
+    } else {
+      ctx.fillStyle = theme.isBW ? theme.fg : '#facc15';
+      ctx.beginPath();
+      for (let i = 0; i < 5; i++) {
+        const a1 = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+        const a2 = a1 + Math.PI / 5;
+        ctx.lineTo(pu.x + Math.cos(a1) * 14, pu.y + Math.sin(a1) * 14);
+        ctx.lineTo(pu.x + Math.cos(a2) * 6, pu.y + Math.sin(a2) * 6);
+      }
+      ctx.closePath(); ctx.fill();
+    }
+  });
+  // Вороги (Гумби та Черепахи Купа)
+  marioWorld.enemies.forEach(e => {
+    if (e.type === 'piranha' || e.x < camX - 40 || e.x > camX + V_WIDTH + 40) return;
+    if (e.type === 'goomba') {
+      if (e.squished) {
+        ctx.fillStyle = theme.isBW ? theme.fg : theme.enemy;
+        ctx.fillRect(e.x - 14, e.y + 8, 28, 8);
+        return;
+      }
+      if (!e.alive) return;
+      ctx.fillStyle = theme.isBW ? theme.fg : theme.enemy;
+      ctx.beginPath(); ctx.arc(e.x, e.y - 4, 14, Math.PI, 0); ctx.fill();
+      ctx.fillRect(e.x - 14, e.y - 4, 28, 12);
+      ctx.fillStyle = theme.isBW ? theme.surface : '#ffffff';
+      ctx.fillRect(e.x - 8, e.y - 6, 4, 6); ctx.fillRect(e.x + 4, e.y - 6, 4, 6);
+      ctx.fillStyle = theme.isBW ? theme.fg : '#000000';
+      ctx.fillRect(e.x - 12, e.y + 8, 8, 6); ctx.fillRect(e.x + 4, e.y + 8, 8, 6);
+    } else if (e.type === 'koopa') {
+      if (!e.alive) return;
+      if (e.inShell) {
+        ctx.fillStyle = theme.isBW ? theme.fg : '#16a34a';
+        ctx.beginPath(); ctx.arc(e.x, e.y + 4, 14, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = theme.surface; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(e.x, e.y + 4, 8, 0, Math.PI * 2); ctx.stroke();
+      } else {
+        ctx.fillStyle = theme.isBW ? theme.fg : '#16a34a';
+        ctx.beginPath(); ctx.arc(e.x, e.y - 3, 14, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = theme.isBW ? theme.surface : '#facc15';
+        ctx.fillRect(e.x - 12, e.y - 17, 13, 11);
+        if (theme.isBW) {
+          ctx.strokeStyle = theme.fg; ctx.lineWidth = 2; ctx.strokeRect(e.x - 12, e.y - 17, 13, 11);
+        }
+        ctx.fillStyle = theme.isBW ? theme.fg : '#000000';
+        ctx.fillRect(e.x - 10, e.y - 13, 3, 3);
+        ctx.fillStyle = theme.isBW ? theme.fg : '#eab308';
+        ctx.fillRect(e.x - 8, e.y + 10, 7, 8); ctx.fillRect(e.x + 2, e.y + 10, 7, 8);
+      }
+    }
+  });
+  // Частинки у світі Маріо
+  for (let i = 0; i < particles.length; i++) {
+    const pt = particles[i];
+    if (pt.scope !== 'mario') continue;
+    ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2);
+    ctx.fillStyle = pt.color; ctx.globalAlpha = Math.max(pt.alpha, 0); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  // Спрайти Г1 та Г2
+  const drawMarioSprite = (p, pNum, capColor, overallColor, isOutline) => {
+    if (p.respawnTimer > 0) return;
+    if (p.invuln > 0 && Math.floor(p.invuln / 4) % 2 === 0) return;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    const scaleY = p.big ? 1.26 : 1;
+    ctx.scale(p.facing, scaleY);
+    if (p.starTimer > 0 && Math.floor(p.starTimer / 3) % 2 === 0 && !theme.isBW) {
+      capColor = '#facc15'; overallColor = '#ec4899';
+    }
+    if (isOutline) {
+      ctx.fillStyle = theme.surface;
+      ctx.strokeStyle = theme.fg;
+      ctx.lineWidth = 3;
+      ctx.fillRect(-13, -28, 26, 10); ctx.strokeRect(-13, -28, 26, 10);
+      ctx.fillRect(-9, -18, 18, 10); ctx.strokeRect(-9, -18, 18, 10);
+      ctx.fillRect(-10, -8, 20, 16); ctx.strokeRect(-10, -8, 20, 16);
+      const legStep = Math.sin(p.anim) * 4;
+      ctx.fillRect(-11, 8, 8, 10 + legStep); ctx.strokeRect(-11, 8, 8, 10 + legStep);
+      ctx.fillRect(3, 8, 8, 10 - legStep); ctx.strokeRect(3, 8, 8, 10 - legStep);
+      ctx.fillStyle = theme.fg;
+      ctx.fillRect(2, -16, 4, 4);
+    } else {
+      ctx.fillStyle = capColor;
+      ctx.fillRect(-13, -28, 26, 10);
+      ctx.fillRect(-4, -24, 17, 6);
+      ctx.fillStyle = theme.isBW ? theme.surface : '#fcd34d';
+      ctx.fillRect(-9, -18, 18, 10);
+      if (theme.isBW) {
+        ctx.strokeStyle = theme.fg; ctx.lineWidth = 2; ctx.strokeRect(-9, -18, 18, 10);
+      }
+      ctx.fillStyle = theme.isBW ? theme.fg : '#000000';
+      ctx.fillRect(2, -16, 4, 4);
+      ctx.fillRect(0, -11, 9, 3);
+      ctx.fillStyle = overallColor;
+      ctx.fillRect(-10, -8, 20, 16);
+      ctx.fillStyle = capColor;
+      ctx.fillRect(-6, -8, 12, 7);
+      ctx.fillStyle = theme.isBW ? theme.fg : '#78350f';
+      const legStep = Math.sin(p.anim) * 4;
+      ctx.fillRect(-11, 8, 8, 10 + legStep);
+      ctx.fillRect(3, 8, 8, 10 - legStep);
+    }
+    ctx.restore();
+    // Мітка номера гравця над головою
+    ctx.fillStyle = theme.isBW ? theme.fg : (pNum === 1 ? '#00f0ff' : '#22c55e');
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Г${pNum}`, p.x, p.y - (p.big ? 44 : 35));
+    ctx.textAlign = 'left';
+  };
+  if (theme.isBW) {
+    drawMarioSprite(p1Runner, 1, theme.fg, theme.fg, false);
+    drawMarioSprite(p2Runner, 2, theme.fg, theme.fg, true);
+  } else {
+    drawMarioSprite(p1Runner, 1, '#ef4444', '#1d4ed8', false);
+    drawMarioSprite(p2Runner, 2, '#22c55e', '#7e22ce', false);
+  }
+  // Плаваючий текст у світі Маріо
+  for (let i = 0; i < floatingTexts.length; i++) {
+    const ft = floatingTexts[i];
+    if (ft.scope !== viewPlayerNum) continue;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, ft.alpha);
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = ft.color;
+    ctx.fillText(ft.text, ft.x, ft.y);
+    ctx.restore();
+  }
+  ctx.restore();
+  // Віртуальні сенсорні кнопки керування (у координатах поточного в'юпорту!)
+  const ctrl = viewPlayerNum === 1 ? marioControls.p1 : marioControls.p2;
+  const drawTouchBtn = (btn, label, active) => {
+    ctx.save();
+    ctx.globalAlpha = active ? 0.85 : 0.4;
+    ctx.fillStyle = theme.isBW ? (active ? theme.fg : theme.surface) : 'rgba(15, 23, 42, 0.78)';
+    ctx.strokeStyle = theme.isBW ? theme.fg : (viewPlayerNum === 1 ? '#00f0ff' : '#ff0055');
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 16) : ctx.rect(btn.x, btn.y, btn.w, btn.h);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = theme.isBW ? (active ? theme.surface : theme.fg) : '#ffffff';
+    ctx.font = 'bold 34px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, btn.x + btn.w / 2, btn.y + btn.h / 2 + 2);
+    ctx.restore();
+  };
+  drawTouchBtn(MARIO_BTN.left, '◀', ctrl.left || (viewPlayerNum === 1 ? keyState['KeyA'] : keyState['ArrowLeft']));
+  drawTouchBtn(MARIO_BTN.right, '▶', ctrl.right || (viewPlayerNum === 1 ? keyState['KeyD'] : keyState['ArrowRight']));
+  drawTouchBtn(MARIO_BTN.jump, '▲', ctrl.jump || (viewPlayerNum === 1 ? (keyState['KeyW'] || keyState['Space']) : keyState['ArrowUp']));
+}
+function drawMarioSplitScreen() {
+  const maxCam = Math.max(0, marioWorld.flagX + 260 - V_WIDTH);
+  const camX1 = Math.max(0, Math.min(maxCam, p1Runner.x - 240));
+  const camX2 = Math.max(0, Math.min(maxCam, p2Runner.x - 240));
+  const theme = getThemeColors();
+  // Верхній екран (Гравець 2, перевернутий на 180°)
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, V_WIDTH, 680);
+  ctx.clip();
+  ctx.translate(V_WIDTH / 2, 340);
+  ctx.rotate(Math.PI);
+  ctx.translate(-V_WIDTH / 2, -340);
+  drawMarioViewport(camX2, 2);
+  ctx.restore();
+  // Нижній екран (Гравець 1)
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 680, V_WIDTH, 680);
+  ctx.clip();
+  ctx.translate(0, 680);
+  drawMarioViewport(camX1, 1);
+  ctx.restore();
+  // Центральна смуга прогресу перегонів
+  ctx.fillStyle = theme.isBW ? theme.surface : '#070913';
+  ctx.fillRect(0, 672, V_WIDTH, 16);
+  ctx.strokeStyle = theme.isBW ? theme.fg : 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, 672); ctx.lineTo(V_WIDTH, 672); ctx.moveTo(0, 688); ctx.lineTo(V_WIDTH, 688); ctx.stroke();
+  const barL = 55, barR = V_WIDTH - 55, barW = barR - barL;
+  const p1Prog = Math.max(0, Math.min(1, p1Runner.x / marioWorld.flagX));
+  const p2Prog = Math.max(0, Math.min(1, p2Runner.x / marioWorld.flagX));
+  ctx.fillStyle = theme.isBW ? theme.fg : '#00f0ff';
+  ctx.beginPath(); ctx.arc(barL + barW * p1Prog, 680, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = theme.isBW ? theme.surface : '#ff0055';
+  ctx.strokeStyle = theme.isBW ? theme.fg : '#ff0055';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(barL + barW * p2Prog, 680, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+}
+function drawSharedEffects() {
+  for (let i = 0; i < particles.length; i++) {
+    const p = particles[i];
+    if (p.scope === 'mario') continue;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+    ctx.fillStyle = p.color; ctx.globalAlpha = Math.max(p.alpha, 0); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  for (let i = 0; i < floatingTexts.length; i++) {
+    const ft = floatingTexts[i];
+    if (ft.scope !== 0) continue;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, ft.alpha);
+    ctx.font = 'bold 20px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = ft.color;
+    ctx.fillText(ft.text, ft.x, ft.y);
+    ctx.restore();
+  }
+}
+function updateVisualEffects() {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx; p.y += p.vy; p.alpha -= p.decay;
+    if (p.alpha <= 0) particles.splice(i, 1);
+  }
+  for (let i = floatingTexts.length - 1; i >= 0; i--) {
+    const ft = floatingTexts[i];
+    ft.y += ft.vy; ft.alpha -= 0.022;
+    if (ft.alpha <= 0) floatingTexts.splice(i, 1);
+  }
+}
+// Перехоплюємо createSparks у Маріо щоб частинки автоматично прив'язувались до світу Маріо
+const _origCreateSparks = createSparks;
+createSparks = function(x, y, color, count = 12) {
+  const theme = getThemeColors();
+  const sparkColor = theme.isBW ? theme.fg : (color || '#ffffff');
+  const scope = currentMode === 'MARIO' ? 'mario' : 0;
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 2 + Math.random() * 8;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      radius: 2 + Math.random() * 3.2,
+      alpha: 1,
+      color: sparkColor,
+      decay: 0.03 + Math.random() * 0.04,
+      scope
+    });
+  }
+};
+/**
+ * ГОЛОВНИЙ ЦИКЛ З ФІКСОВАНИМ КРОКОМ 60Hz (ОДНАКОВА ШВИДКІСТЬ НА 60Hz, 90Hz І 120Hz!)
+ */
+const FIXED_STEP = 1000 / 60;
+let lastFrameTime = 0;
+let accumulator = 0;
+function loop(now) {
+  if (!lastFrameTime) lastFrameTime = now;
+  const elapsed = Math.min(80, Math.max(0, now - lastFrameTime));
+  lastFrameTime = now;
+  accumulator += elapsed;
+  while (accumulator >= FIXED_STEP) {
+    if (gameState === 'PLAYING') {
+      if (currentMode === 'HOCKEY') updateHockeyPhysics();
+      else if (currentMode === 'INVADERS') updateInvadersPhysics();
+      else if (currentMode === 'SNAKE') updateSnakePhysics();
+      else if (currentMode === 'MARIO') updateMarioPhysics();
+    }
+    if (gameState === 'PLAYING' || gameState === 'POINT_PAUSE') {
+      updateVisualEffects();
+    }
+    accumulator -= FIXED_STEP;
+  }
+  ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
+  if (currentMode === 'HOCKEY') drawHockeyField();
+  else if (currentMode === 'INVADERS') drawInvadersField();
+  else if (currentMode === 'SNAKE') drawSnakeField();
+  else if (currentMode === 'MARIO') drawMarioSplitScreen();
+  drawSharedEffects();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+/**
+ * ІНТЕРФЕЙС, МЕНЮ ТА ЕКСПОРТ ОФЛАЙН-ФАЙЛУ
+ */
+const modal = document.getElementById('menu-modal');
+const btnPlayResume = document.getElementById('btn-play-resume');
+const btnPause = document.getElementById('btn-pause');
+const btnSound = document.getElementById('btn-sound');
+const btnReset = document.getElementById('btn-reset-game');
+const btnExport = document.getElementById('btn-export-html');
+const modeHockey = document.getElementById('mode-hockey');
+const modeInvaders = document.getElementById('mode-invaders');
+const modeSnake = document.getElementById('mode-snake');
+const modeMario = document.getElementById('mode-mario');
+const invadersOptions = document.getElementById('invaders-options');
+const snakeOptions = document.getElementById('snake-options');
+const MODE_META = {
+  HOCKEY:   { title: 'ПОВІТРЯНИЙ ХОКЕЙ', desc: 'Відбивайте шайбу в своїй половині • Забийте у ворота суперника' },
+  INVADERS: { title: 'КОСМІЧНА БИТВА',  desc: 'Водіть пальцем для руху й вогню • У коопі бережіть напарника!' },
+  SNAKE:    { title: 'ПОДВІЙНА ЗМІЙКА', desc: 'Свайпайте для повороту • Не врізайтесь у хвости та межі' },
+  MARIO:    { title: 'МАРІО ДУЕТ',      desc: 'Кнопки ◀ ▶ та ▲ у вашій половині • Збирайте бонуси й дістаньтесь прапора!' }
+};
+function openMenu(isPause = false) {
+  clearPendingPointTimeout();
+  gameState = isPause ? 'PAUSED' : 'MENU';
+  const heading = document.getElementById('modal-heading');
+  heading.className = 'modal-title';
+  heading.innerText = isPause ? 'ПАУЗА' : MODE_META[currentMode].title;
+  document.getElementById('modal-desc').innerText = MODE_META[currentMode].desc;
+  btnPlayResume.innerText = isPause ? 'Продовжити гру' : 'Почати матч';
+  modal.classList.add('active');
+}
+function closeMenu() {
+  lastFrameTime = 0;
+  accumulator = 0;
+  modal.classList.remove('active');
+  gameState = 'PLAYING';
+}
+btnPause.addEventListener('click', () => {
+  sound.init();
+  if (gameState === 'PLAYING' || gameState === 'POINT_PAUSE') openMenu(true);
+  else if (gameState === 'PAUSED') closeMenu();
+});
+btnSound.addEventListener('click', () => {
+  sound.init();
+  sound.enabled = !sound.enabled;
+  document.getElementById('icon-sound-on').style.display = sound.enabled ? 'block' : 'none';
+  document.getElementById('icon-sound-off').style.display = sound.enabled ? 'none' : 'block';
+});
+btnPlayResume.addEventListener('click', () => {
+  sound.init();
+  if (gameState === 'OVER') resetMatch();
+  closeMenu();
+});
+function resetMatch() {
+  clearPendingPointTimeout();
+  p1Score = 0; p2Score = 0; p1Hits = 0; p2Hits = 0; totalHits = 0; rallyHits = 0;
+  lasers = []; alienShots = []; particles = []; floatingTexts = [];
+  ufo.active = false;
+  mallet1.x = V_WIDTH / 2; mallet1.y = V_HEIGHT - 180; mallet1.targetX = mallet1.x; mallet1.targetY = mallet1.y; mallet1.touchId = null;
+  mallet2.x = V_WIDTH / 2; mallet2.y = 180; mallet2.targetX = mallet2.x; mallet2.targetY = mallet2.y; mallet2.touchId = null;
+  ship1.x = V_WIDTH / 2; ship1.targetX = ship1.x; ship1.touchId = null; ship1.isFiring = false;
+  ship2.x = V_WIDTH / 2; ship2.targetX = ship2.x; ship2.touchId = null; ship2.isFiring = false;
+  marioControls.p1 = { left: false, right: false, jump: false, prevJump: false };
+  marioControls.p2 = { left: false, right: false, jump: false, prevJump: false };
+  if (currentMode === 'HOCKEY') resetPuck(0);
+  else if (currentMode === 'INVADERS') initBunkers();
+  else if (currentMode === 'SNAKE') initSnakeMatch();
+  else if (currentMode === 'MARIO') initMarioWorld(false);
+  updateScoreDOM();
+}
+btnReset.addEventListener('click', () => {
+  sound.init();
+  resetMatch();
+  closeMenu();
+});
+function setMode(mode) {
+  currentMode = mode;
+  gameState = 'MENU';
+  [modeHockey, modeInvaders, modeSnake, modeMario].forEach(b => b.classList.remove('active'));
+  invadersOptions.style.display = mode === 'INVADERS' ? 'block' : 'none';
+  snakeOptions.style.display = mode === 'SNAKE' ? 'block' : 'none';
+  const heading = document.getElementById('modal-heading');
+  heading.className = 'modal-title';
+  heading.innerText = MODE_META[mode].title;
+  document.getElementById('modal-desc').innerText = MODE_META[mode].desc;
+  btnPlayResume.innerText = 'Почати матч';
+  if (mode === 'HOCKEY') {
+    modeHockey.classList.add('active');
+    document.getElementById('lbl-p1-stat').innerText = 'Ударів';
+    document.getElementById('lbl-p2-stat').innerText = 'Ударів';
+    document.getElementById('lbl-total-stat').innerText = 'Усього ударів';
+    document.getElementById('lbl-rally-stat').innerText = 'Серія';
+  } else if (mode === 'INVADERS') {
+    modeInvaders.classList.add('active');
+    document.getElementById('lbl-p1-stat').innerText = invadersShape === 'coop' ? 'Влучань/Щит' : 'Очки';
+    document.getElementById('lbl-p2-stat').innerText = invadersShape === 'coop' ? 'Влучань/Щит' : 'Очки';
+    document.getElementById('lbl-total-stat').innerText = 'Пострілів';
+    document.getElementById('lbl-rally-stat').innerText = 'Перехоплень';
+  } else if (mode === 'SNAKE') {
+    modeSnake.classList.add('active');
+    document.getElementById('lbl-p1-stat').innerText = 'Довжина';
+    document.getElementById('lbl-p2-stat').innerText = 'Довжина';
+    document.getElementById('lbl-total-stat').innerText = 'З\'їдено їжі';
+    document.getElementById('lbl-rally-stat').innerText = 'Раунд';
+  } else if (mode === 'MARIO') {
+    modeMario.classList.add('active');
+    document.getElementById('lbl-p1-stat').innerText = 'Стан';
+    document.getElementById('lbl-p2-stat').innerText = 'Стан';
+    document.getElementById('lbl-total-stat').innerText = 'Зібрано монет';
+    document.getElementById('lbl-rally-stat').innerText = 'Дистанція';
+  }
+  resetMatch();
+}
+modeHockey.addEventListener('click', () => setMode('HOCKEY'));
+modeInvaders.addEventListener('click', () => setMode('INVADERS'));
+modeSnake.addEventListener('click', () => setMode('SNAKE'));
+modeMario.addEventListener('click', () => setMode('MARIO'));
+// ПЕРЕМИКАЧІ КОЛЬОРУ ТА ФОРМИ
+const themeBtnColor = document.getElementById('theme-btn-color');
+const themeBtnDark = document.getElementById('theme-btn-dark');
+const themeBtnLight = document.getElementById('theme-btn-light');
+const styleBtnRound = document.getElementById('style-btn-round');
+const styleBtnPixel = document.getElementById('style-btn-pixel');
+function setTheme(theme) {
+  activeTheme = theme;
+  document.body.classList.remove('theme-colorful', 'theme-dark', 'theme-light');
+  document.body.classList.add(`theme-${theme}`);
+  [themeBtnColor, themeBtnDark, themeBtnLight].forEach(b => b.classList.remove('active'));
+  if (theme === 'colorful') themeBtnColor.classList.add('active');
+  else if (theme === 'dark') themeBtnDark.classList.add('active');
+  else themeBtnLight.classList.add('active');
+  updateScoreDOM();
+}
+themeBtnColor.addEventListener('click', () => setTheme('colorful'));
+themeBtnDark.addEventListener('click', () => setTheme('dark'));
+themeBtnLight.addEventListener('click', () => setTheme('light'));
+styleBtnRound.addEventListener('click', () => {
+  document.body.classList.remove('style-pixel');
+  document.body.classList.add('style-round');
+  styleBtnRound.classList.add('active');
+  styleBtnPixel.classList.remove('active');
+});
+styleBtnPixel.addEventListener('click', () => {
+  document.body.classList.remove('style-round');
+  document.body.classList.add('style-pixel');
+  styleBtnPixel.classList.add('active');
+  styleBtnRound.classList.remove('active');
+});
+// Налаштування Space Invaders
+document.getElementById('inv-coop').addEventListener('click', (e) => {
+  invadersShape = 'coop';
+  document.querySelectorAll('#invaders-options .target-btn').forEach(b => b.classList.remove('active'));
+  e.currentTarget.classList.add('active');
+  setMode('INVADERS');
+});
+document.getElementById('inv-simple').addEventListener('click', (e) => {
+  invadersShape = 'simple';
+  document.querySelectorAll('#invaders-options .target-btn').forEach(b => b.classList.remove('active'));
+  e.currentTarget.classList.add('active');
+  setMode('INVADERS');
+});
+document.getElementById('inv-complex').addEventListener('click', (e) => {
+  invadersShape = 'complex';
+  document.querySelectorAll('#invaders-options .target-btn').forEach(b => b.classList.remove('active'));
+  e.currentTarget.classList.add('active');
+  setMode('INVADERS');
+});
+// Налаштування змійки
+document.getElementById('wall-looped').addEventListener('click', () => {
+  snakeWallMode = 'looped';
+  document.getElementById('wall-looped').classList.add('active');
+  document.getElementById('wall-deadly').classList.remove('active');
+});
+document.getElementById('wall-deadly').addEventListener('click', () => {
+  snakeWallMode = 'deadly';
+  document.getElementById('wall-deadly').classList.add('active');
+  document.getElementById('wall-looped').classList.remove('active');
+});
+document.getElementById('style-flex').addEventListener('click', () => {
+  snakeStyleMode = 'flex';
+  document.getElementById('style-flex').classList.add('active');
+  document.getElementById('style-pixel').classList.remove('active');
+  initSnakeMatch();
+});
+document.getElementById('style-pixel').addEventListener('click', () => {
+  snakeStyleMode = 'pixel';
+  document.getElementById('style-pixel').classList.add('active');
+  document.getElementById('style-flex').classList.remove('active');
+  initSnakeMatch();
+});
+// Ліміт очок
+document.querySelectorAll('.target-score-selector .target-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    document.querySelectorAll('.target-score-selector .target-btn').forEach(b => b.classList.remove('active'));
+    e.currentTarget.classList.add('active');
+    targetScore = parseInt(e.currentTarget.getAttribute('data-score'), 10);
+  });
+});
+/**
+ * ЧИСТИЙ ЕКСПОРТ HTML ДЛЯ 100% ОФЛАЙН-ВИКОРИСТАННЯ
+ */
+btnExport.addEventListener('click', () => {
+  try {
+    const clone = document.documentElement.cloneNode(true);
+    const cBody = clone.querySelector('body');
+    cBody.className = 'theme-colorful style-round';
+    const resetIds = {
+      'p1-score': '0', 'p2-score': '0', 'p1-hits': '0', 'p2-hits': '0',
+      'stat-total-hits': '0', 'stat-rally': '0',
+      'lbl-p1-stat': 'Очки', 'lbl-p2-stat': 'Очки',
+      'lbl-total-stat': 'Усього дій', 'lbl-rally-stat': 'Серія',
+      'modal-heading': MODE_META.INVADERS.title,
+      'modal-desc': MODE_META.INVADERS.desc,
+      'btn-play-resume': 'Почати матч',
+      'goal-splash': 'ГОЛ!'
+    };
+    Object.keys(resetIds).forEach(id => {
+      const el = clone.querySelector('#' + id);
+      if (el) el.textContent = resetIds[id];
+    });
+    const cHead = clone.querySelector('#modal-heading');
+    if (cHead) cHead.className = 'modal-title';
+    const cModal = clone.querySelector('#menu-modal');
+    if (cModal) cModal.className = 'modal-overlay active';
+    const cSplash = clone.querySelector('#goal-splash');
+    if (cSplash) cSplash.className = '';
+    const cStage = clone.querySelector('#stage-box');
+    if (cStage) cStage.removeAttribute('style');
+    const cCanvas = clone.querySelector('#hockey-canvas');
+    if (cCanvas) { cCanvas.removeAttribute('width'); cCanvas.removeAttribute('height'); }
+    const cInvOpt = clone.querySelector('#invaders-options');
+    if (cInvOpt) cInvOpt.style.display = 'block';
+    const cSnkOpt = clone.querySelector('#snake-options');
+    if (cSnkOpt) cSnkOpt.style.display = 'none';
+    const cSndOn = clone.querySelector('#icon-sound-on');
+    const cSndOff = clone.querySelector('#icon-sound-off');
+    if (cSndOn) cSndOn.style.display = 'block';
+    if (cSndOff) cSndOff.style.display = 'none';
+    clone.querySelectorAll('.mode-btn, .target-btn').forEach(b => b.classList.remove('active'));
+    ['#theme-btn-color', '#style-btn-round', '#mode-invaders', '#inv-coop', '#wall-looped', '#style-flex', '.target-score-selector .target-btn[data-score="10"]']
+      .forEach(sel => {
+        const el = clone.querySelector(sel);
+        if (el) el.classList.add('active');
+      });
+    const htmlSource = '<!DOCTYPE html>\n' + clone.outerHTML;
+    const blob = new Blob([htmlSource], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'arcade_duels_offline.html';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert('Помилка завантаження: ' + err.message);
+  }
+});
+// Початкова синхронізація інтерфейсу та гри
+setMode('INVADERS');
+</script>
+</body>
+</html>
